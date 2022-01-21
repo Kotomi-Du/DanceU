@@ -38,7 +38,7 @@ class Audio:
     
     def __times_to_frameidx(self, times):
         times = np.array(times)
-        frameidx = (times * self.framerate).astype(np.int)
+        frameidx = (times * self.framerate).astype(int)
         return frameidx
     
     def __speed_classify(self, tempo):
