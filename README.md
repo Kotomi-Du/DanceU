@@ -1,4 +1,4 @@
 # DanceU
 
 ## Solution Design
-![Solution Design](doc/Solution.png)
+![Solution Design](doc/Solution.PNG)
