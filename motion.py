@@ -5,7 +5,7 @@ class Motion:
     def __init__(self, video_path) -> None:
         # bboxes is array including elements like [xmin, ymin, xmax, ymax]
         #self.bboxes = person_detection.Infer(video_path)  
-        self.area_data = np.load( "test/xmax_data.npy")
+        self.area_data = np.load( "cache/xmax_data.npy")
         self.frame_num = len(self.area_data)
 
         
