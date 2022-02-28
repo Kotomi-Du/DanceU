@@ -5,7 +5,7 @@ class Motion:
     def __init__(self, video_path) -> None:
         # bboxes is array including elements like [xmin, ymin, xmax, ymax]
         #self.bboxes = person_detection.Infer(video_path)  
-        self.area_data = np.load( "test/area_data.npy")
+        self.area_data = np.load( "test/xmax_data.npy")
         self.frame_num = len(self.area_data)
 
         
@@ -115,6 +115,13 @@ class Motion:
             else:
                 scale = block_info["max_value"] / block_info["min_value"]
         '''
+        desc_dic = {}
+        desc_dic['frame'] = cur_idx
+        desc_dic['effect'].append({'type': 'zoom', 'scale': scale})
+        desc_dic['start_from'] = pre_idx
+        desc_dic['end_to'] = None
+        return desc_dic
+
     def __analyze_pose_direction(self, frame_idx):
         pass
     
@@ -146,3 +153,12 @@ class Motion:
 if __name__ == '__main__':
     m = Motion("resources_video\spring_origin.mp4")
     m.visual_motion_beats()
+    effect_desc_list = [
+        {'frame': 53, 
+         'effect':[
+            {'type':'zoom', 'scale': -0.2},
+            {'type':'move', 'location_x': -0.1}],
+         'start_from':43, 
+         'end_to': None
+        }
+    ]
