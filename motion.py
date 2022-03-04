@@ -43,6 +43,7 @@ class Motion:
         self.frame_num = len(self.area_data)
         self.beat_effect = []
         self.related_effect = []
+        self.delta_x = []
 
         
         '''
@@ -196,9 +197,6 @@ class Motion:
     def analyze_motion(self, audio_beats):
         delta_rate = np.zeros(self.frame_num)
         delta_trend = np.zeros(self.frame_num)
-        beat_x = []
-        delta_x=  []
-        related_x = []
         for i in range(self.frame_num):
             if i == 0:
                 continue
@@ -243,8 +241,26 @@ class Motion:
                 related_idx, value = find_min(effectbeat_idx, self.area_data, delta_trend[maxdelta_idx])
 
             self.beat_effect.append(effectbeat_idx)
-            delta_x.append(maxdelta_idx)
+            self.delta_x.append(maxdelta_idx)
             self.related_effect.append(related_idx)
+    
+    def visualization(self):
+        import matplotlib.pyplot as plt
+        x_data = range(len(self.area_data))
+        # create figure and axis objects with subplots()
+        fig,ax = plt.subplots()
+        # make a plot
+        ax.plot(x_data, self.area_data, color="green", linestyle='-')
+        vis_y = [self.area_data[i] for i in self.beat_effect]
+        plt.scatter(self.beat_effect, vis_y, color = "black", s = 25)
+
+        vis_y = [self.area_data[i] for i in self.related_effect]
+        plt.scatter(self.related_effect, vis_y, color = "blue", s = 25)
+
+        vis_y = [self.area_data[i] for i in  self.delta_x] 
+        plt.scatter( self.delta_x, vis_y, color = "red", s = 10)
+        plt.show()
+
 
     def get_effect_desc(self):
         result_list = []
@@ -283,4 +299,5 @@ if __name__ == '__main__':
     beats = [16,34,51,69,85,103,121,138,156,174,191,208,226,243,260,278, 296,314,330,348,366,383,401,418,436,454, 471,489,506,523,541,558,576,593, 610]
     m.preprocess_data()
     m.analyze_motion(beats)
+    m.visualization()
     print(m.get_effect_desc())
