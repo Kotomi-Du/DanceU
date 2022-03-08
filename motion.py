@@ -64,13 +64,15 @@ class Motion:
     def __analyze_pose_direction(self, frame_idx):
         pass
     
-    def preprocess_data(self):
+    def preprocess_data(self, data, kernel_size):
         ##rectify some data 361-366
-        self.area_data[361:367] = self.area_data[360]
+        data[361:367] = self.area_data[360]
         #average smooth
-        kernel_size = 10
         kernel = np.ones(kernel_size) / kernel_size
-        self.area_data = np.convolve(self.area_data, kernel, mode='same')
+        temp = np.convolve(data, kernel, mode='same')
+        affected_idx = int(kernel_size/2)
+        data =  temp[affected_idx:-affected_idx] 
+        return data
     
 
     def analyze_motion(self, audio_beats):
@@ -176,7 +178,8 @@ class Motion:
 if __name__ == '__main__':
     m = Motion("resources_video\spring_origin.mp4")
     beats = [16,34,51,69,85,103,121,138,156,174,191,208,226,243,260,278, 296,314,330,348,366,383,401,418,436,454, 471,489,506,523,541,558,576,593, 610]
-    m.preprocess_data()
+    kernel_size = 10
+    m.area_data = m.preprocess_data(m.area_data, kernel_size)
     m.analyze_motion(beats)
     m.visualization()
     print(m.get_effect_desc())
