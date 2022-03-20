@@ -108,27 +108,50 @@ def make_effect_point_list_from_desc_new(effect_desc_list, default_scale=1.2, sc
         {'frame': 0, 'scale_x': 1.0, 'scale_y': 1.0, 'location_x': 0.0, 'location_y': 0.0},
         {'frame': 1, 'scale_x': default_scale, 'scale_y': default_scale, 'location_x': default_loc_x, 'location_y': default_loc_y},
     ])
+    scale = default_scale
     for effect_desc in effect_desc_list:
         key_frame = effect_desc['frame']
-        key_scale = default_scale
+        key_scale = scale
         key_loc_x = default_loc_x
         key_loc_y = default_loc_y
         for effect in effect_desc['effect']:
             if effect['type'] == 'zoom':
-                key_scale = default_scale + effect['scale'] 
+                # key_scale = default_scale + effect['scale'] if default_scale + effect['scale'] > 1 else default_scale
+                key_scale = effect['scale'] if effect['scale'] > 1 else default_scale
+                scale = key_scale
             if effect['type'] == 'move':
-                key_scale = default_scale
+                key_scale = scale
                 key_loc_x = effect['location_x']
             
-            frame1 = effect_desc['start_from'] if effect_desc['start_from'] is not None else key_frame - frame_delta
-            frame2 = key_frame
-            frame3 = effect_desc['end_to'] if effect_desc['end_to'] is not None else key_frame + frame_delta
+            effect_points = []
+            if effect_desc['start_from'] is not None: 
+                effect_points.append({'frame': effect_desc['start_from'], 
+                                      'scale_x': default_scale, 
+                                      'scale_y': default_scale, 
+                                      'location_x': default_loc_x, 
+                                      'location_y': default_loc_y})
+            effect_points.append({'frame': key_frame, 
+                                  'scale_x': key_scale, 
+                                  'scale_y': key_scale, 
+                                  'location_x': key_loc_x, 
+                                  'location_y': key_loc_y})
+            if effect_desc['end_to'] is not None:
+                effect_points.append({'frame': effect_desc['end_to'], 
+                                      'scale_x': default_scale, 
+                                      'scale_y': default_scale, 
+                                      'location_x': default_loc_x, 
+                                      'location_y': default_loc_y})
+            effect_point_list.extend(effect_points)
 
-            effect_point_list.extend([
-                {'frame': frame1, 'scale_x': default_scale, 'scale_y': default_scale, 'location_x': default_loc_x, 'location_y': default_loc_y},
-                {'frame': frame2, 'scale_x': key_scale, 'scale_y': key_scale, 'location_x': key_loc_x, 'location_y': key_loc_y},
-                {'frame': frame3, 'scale_x': default_scale, 'scale_y': default_scale, 'location_x': default_loc_x, 'location_y': default_loc_y},
-            ])
+            # frame1 = effect_desc['start_from'] if effect_desc['start_from'] is not None else key_frame - frame_delta
+            # frame2 = key_frame
+            # frame3 = effect_desc['end_to'] if effect_desc['end_to'] is not None else key_frame + frame_delta
+
+            # effect_point_list.extend([
+            #     {'frame': frame1, 'scale_x': default_scale, 'scale_y': default_scale, 'location_x': default_loc_x, 'location_y': default_loc_y},
+            #     {'frame': frame2, 'scale_x': key_scale, 'scale_y': key_scale, 'location_x': key_loc_x, 'location_y': key_loc_y},
+            #     {'frame': frame3, 'scale_x': default_scale, 'scale_y': default_scale, 'location_x': default_loc_x, 'location_y': default_loc_y},
+            # ])
 
     return effect_point_list
 
