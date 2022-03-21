@@ -3,14 +3,16 @@ from scipy import signal
 
 from audio import Audio
 
-def preprocess_data(area_data):
+def preprocess_data( data, kernel_size):
     ##rectify some data 361-366
-    area_data[361:367] = area_data[360]
+    data[361:367] = data[360]
     #average smooth
-    kernel_size = 10
     kernel = np.ones(kernel_size) / kernel_size
+    temp = np.convolve(data, kernel, mode='same')
+    affected_idx = int(kernel_size/2)
+    data[affected_idx:-affected_idx] =  temp[affected_idx:-affected_idx] 
+    return data
 
-    return np.convolve(area_data, kernel, mode='same')
 
 def find_steepest(data_block, start_frame_idx):
     n = len(data_block)
@@ -54,7 +56,7 @@ def analyze_motion(area_data, audio_beats, group_size=4):
 
     a = Audio('resources_video/spring_origin.mp4')
     effect_list = []
-    for i in range(0, n_beats, group_size):
+    for i in range(2, n_beats, group_size):
         if (i + group_size - n_beats)/group_size > 0.5: break
         # if i + group_size >= n_beats: break
         st = audio_beats[i]
