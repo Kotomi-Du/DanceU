@@ -3,7 +3,7 @@ from scipy import signal
 
 from audio import Audio
 
-def preprocess_data( data, kernel_size):
+def preprocess_data( data, kernel_size = 10):
     ##rectify some data 361-366
     data[361:367] = data[360]
     #average smooth
