@@ -111,18 +111,50 @@ def analyze_motion(area_data, audio_beats, group_size=4):
             if res['is_audio_beat']: 
                 end_to = res['key_frame']
 
+            real_scale = area_data[key_frame_idx]/ area_data[start_from]
+            scale = max(min(real_scale, 1.7), 1.35)
+
             effect_dict={
             'frame':key_frame_idx, 
             'effect':[{'type':'zoom', 'scale':scale}],
             'start_from':start_from,
             'end_to': end_to}
 
+            start_list.append(start_from)
+            key_list.append(key_frame_idx)
+            end_list.append(end_to)
+
             effect_list.append(effect_dict)
 
     print(effect_list)
     return effect_list
 
+def visualization(area_data):
+    import matplotlib.pyplot as plt
+    x_data = range(len(area_data))
+    # create figure and axis objects with subplots()
+    fig,ax = plt.subplots()
+    # make a plot
+    ax.plot(x_data, area_data, color="green", linestyle='-')
+    vis_y = [area_data[i] for i in start_list]
+    plt.scatter(start_list, vis_y, color = "black", s = 25)
 
+    vis_y = [area_data[i] for i in key_list]
+    plt.scatter(key_list, vis_y, color = "blue", s = 25)
+
+    vis_y = [area_data[i] for i in end_list]
+    plt.scatter(end_list, vis_y, color = "black", s = 25)
+
+    #vis_y = [self.area_data[i] for i in  self.delta_x] 
+    beats = [16,34,51,69,85,103,121,138,156,174,191,208,226,243,260,278, 296,314,330,348,366,383,401,418,436,454, 471,489,506,523,541,558,576,593, 610]
+    vis_y = [area_data[i] for i in beats] 
+    plt.scatter( beats, vis_y, color = "red", marker="x", s = 10)
+    plt.show()
+    plt.savefig("filename.png")
+
+start_list = []
+key_list = []
+end_list = []
 
 
 if __name__ == "__main__":
@@ -131,7 +163,7 @@ if __name__ == "__main__":
 
     area_data = preprocess_data(area_data)
     res = analyze_motion(area_data, beats, group_size=4)
-
+    '''
     x = [i for i in range(1, len(area_data)+1)]
     start_from, key, end_to = [], [], []
     for effect in res:
@@ -147,7 +179,9 @@ if __name__ == "__main__":
     for x in end_to:
         plt.axvline(x, ls='-', c='blue')
     plt.savefig('./plot.jpg')
+    '''
 
 
     from effect import gen_effects
     gen_effects(res)
+    visualization(area_data)
