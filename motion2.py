@@ -3,14 +3,15 @@ from scipy import signal
 
 from audio import Audio
 
-def preprocess_data(area_data):
+def preprocess_data( data, kernel_size = 10):
     ##rectify some data 361-366
-    area_data[361:367] = area_data[360]
+    data[361:367] = data[360]
     #average smooth
-    kernel_size = 10
     kernel = np.ones(kernel_size) / kernel_size
-
-    return np.convolve(area_data, kernel, mode='same')
+    temp = np.convolve(data, kernel, mode='same')
+    affected_idx = int(kernel_size/2)
+    data[affected_idx:-affected_idx] =  temp[affected_idx:-affected_idx] 
+    return data
 
 def find_steepest(data_block, start_frame_idx):
     n = len(data_block)
@@ -26,7 +27,7 @@ def find_steepest(data_block, start_frame_idx):
     
     return (start_frame_idx + idx_of_steepest, delta_at_steepest)
 
-def find_search_range(key_frame_idx, n_frames, frame_rate, length=0.8, bias=0.1):
+def find_search_range(key_frame_idx, n_frames, frame_rate, length=1, bias=0.1):
     left_st = int(key_frame_idx-(bias*frame_rate)-(length*frame_rate))
     left_ed = int(key_frame_idx-(bias*frame_rate))
     right_st = int(key_frame_idx+(bias*frame_rate))
@@ -42,19 +43,43 @@ def find_search_range(key_frame_idx, n_frames, frame_rate, length=0.8, bias=0.1)
 
     return (left_range, right_range)
 
+def find_maxima(key_frame, delta, maximas, n_frames, frame_rate=30, srange=1.0):
+    res = key_frame
+    if delta < 0:
+        temp = key_frame-(frame_rate*srange)
+        left_bound = int(temp) if temp >= 0 else 0
+        for i in range(key_frame, left_bound, -1):
+            if i in maximas: 
+                res = i
+                # print('found')
+                break
+
+    else:
+        temp = key_frame+(frame_rate*srange)
+        right_bound = int(temp) if temp < n_frames else n_frames
+        for i in range(key_frame, right_bound, 1):
+            if i in maximas: 
+                res = i
+                break
+
+    return res
+
+
 
 def analyze_motion(area_data, audio_beats, group_size=4):
     n_frames = len(area_data)
     n_beats = len(audio_beats)
-    local_maxima = signal.argrelextrema(area_data, np.less, axis=0, order=5)
-    local_minima = signal.argrelextrema(area_data, np.greater, axis=0, order=8)
+    local_maxima = signal.argrelextrema(area_data, np.greater, axis=0, order=3)
+    local_minima = signal.argrelextrema(area_data, np.less, axis=0, order=3)
     minima_dict = dict()
     for item in local_minima[0]:
         minima_dict[item] = 1
-
+    maxima_dict = dict()
+    for item in local_maxima[0]:
+        maxima_dict[item] = 1
     a = Audio('resources_video/spring_origin.mp4')
     effect_list = []
-    for i in range(0, n_beats, group_size):
+    for i in range(2, n_beats, group_size):
         if (i + group_size - n_beats)/group_size > 0.5: break
         # if i + group_size >= n_beats: break
         st = audio_beats[i]
@@ -62,6 +87,7 @@ def analyze_motion(area_data, audio_beats, group_size=4):
         block = area_data[st:ed]
 
         key_frame_idx, delta = find_steepest(block, st)
+        key_frame_idx = find_maxima(key_frame_idx, delta, maxima_dict, n_frames)
         left, right = find_search_range(key_frame_idx, n_frames, 30)
 
         scale = 1.35
@@ -75,12 +101,15 @@ def analyze_motion(area_data, audio_beats, group_size=4):
                 if i in minima_dict: end_to = i
         
         if start_from is not None and end_to is not None:
-            res = a.get_effect_advice(start_from, slack_range=8)
+            res = a.get_effect_advice(start_from, slack_range=10)
             if res['is_audio_beat']: 
                 start_from = res['key_frame']
-            res = a.get_effect_advice(key_frame_idx, slack_range=8)
+            res = a.get_effect_advice(key_frame_idx, slack_range=10)
             if res['is_audio_beat']: 
                 key_frame_idx = res['key_frame']
+            res = a.get_effect_advice(end_to, slack_range=10)
+            if res['is_audio_beat']: 
+                end_to = res['key_frame']
 
             effect_dict={
             'frame':key_frame_idx, 
@@ -89,7 +118,9 @@ def analyze_motion(area_data, audio_beats, group_size=4):
             'end_to': end_to}
 
             effect_list.append(effect_dict)
+
     print(effect_list)
+    return effect_list
 
 
 
@@ -99,4 +130,24 @@ if __name__ == "__main__":
     beats = [16,34,51,69,85,103,121,138,156,174,191,208,226,243,260,278, 296,314,330,348,366,383,401,418,436,454, 471,489,506,523,541,558,576,593, 610]
 
     area_data = preprocess_data(area_data)
-    analyze_motion(area_data, beats, group_size=4)
+    res = analyze_motion(area_data, beats, group_size=4)
+
+    x = [i for i in range(1, len(area_data)+1)]
+    start_from, key, end_to = [], [], []
+    for effect in res:
+        start_from.append(effect['start_from'])
+        key.append(effect['frame'])
+        end_to.append(effect['end_to'])
+    from matplotlib import pyplot as plt
+    plt.plot(x, area_data)
+    for x in start_from:
+        plt.axvline(x, ls='-', c='green')
+    for x in key:
+        plt.axvline(x, ls='-', c='yellow')
+    for x in end_to:
+        plt.axvline(x, ls='-', c='blue')
+    plt.savefig('./plot.jpg')
+
+
+    from effect import gen_effects
+    gen_effects(res)
