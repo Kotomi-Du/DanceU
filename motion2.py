@@ -1,8 +1,6 @@
 import numpy as np
 from scipy import signal
 
-from audio import Audio
-
 def preprocess_data( data, kernel_size = 10):
     ##rectify some data 361-366
     data[361:367] = data[360]
@@ -66,7 +64,7 @@ def find_maxima(key_frame, delta, maximas, n_frames, frame_rate=30, srange=1.0):
 
 
 
-def analyze_motion(area_data, audio_beats, group_size=4):
+def analyze_motion(area_data, audio_beats, au_instance, group_size=4):
     n_frames = len(area_data)
     n_beats = len(audio_beats)
     local_maxima = signal.argrelextrema(area_data, np.greater, axis=0, order=3)
@@ -77,7 +75,7 @@ def analyze_motion(area_data, audio_beats, group_size=4):
     maxima_dict = dict()
     for item in local_maxima[0]:
         maxima_dict[item] = 1
-    a = Audio('resources_video/spring_origin.mp4')
+    # a = Audio('resources_video/spring_origin.mp4')
     effect_list = []
     for i in range(2, n_beats, group_size):
         if (i + group_size - n_beats)/group_size > 0.5: break
@@ -101,13 +99,13 @@ def analyze_motion(area_data, audio_beats, group_size=4):
                 if i in minima_dict: end_to = i
         
         if start_from is not None and end_to is not None:
-            res = a.get_effect_advice(start_from, slack_range=10)
+            res = au_instance.get_effect_advice(start_from, slack_range=10)
             if res['is_audio_beat']: 
                 start_from = res['key_frame']
-            res = a.get_effect_advice(key_frame_idx, slack_range=10)
+            res = au_instance.get_effect_advice(key_frame_idx, slack_range=10)
             if res['is_audio_beat']: 
                 key_frame_idx = res['key_frame']
-            res = a.get_effect_advice(end_to, slack_range=10)
+            res = au_instance.get_effect_advice(end_to, slack_range=10)
             if res['is_audio_beat']: 
                 end_to = res['key_frame']
 
