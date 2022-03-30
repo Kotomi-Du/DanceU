@@ -12,7 +12,7 @@ def main(video_path, area_data):
     for k, v in audio_beats.items(): beats.append(k)
     area_data = preprocess_data(area_data)
     res = analyze_motion(area_data, beats, a, group_size=4)
-    gen_effects(res)
+    gen_effects(res,video_in_path=video_path)
 
 def calc_area(video_path):
     bboxes = Infer(video_path)
