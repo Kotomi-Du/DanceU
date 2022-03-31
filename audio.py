@@ -57,6 +57,7 @@ class Audio:
         res : dict
           - {'is_audio_beat':False, 'start_frame':-1, 'key_frame':-1, 'speed':-1}
         '''
+        
         assert isinstance(motion_beat_frame, int), 'Input parameter must be integer'
         assert isinstance(slack_range, int), 'Input parameter must be integer'
         assert isinstance(farthest_onset, int), 'Input parameter must be integer'
