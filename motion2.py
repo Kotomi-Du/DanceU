@@ -3,7 +3,7 @@ from scipy import signal
 
 def preprocess_data( data, kernel_size = 10):
     ##rectify some data 361-366
-    data[361:367] = data[360]
+    # data[361:367] = data[360]
     #average smooth
     kernel = np.ones(kernel_size) / kernel_size
     temp = np.convolve(data, kernel, mode='same')
@@ -36,8 +36,10 @@ def find_search_range(key_frame_idx, n_frames, frame_rate, length=1, bias=0.1):
     if left_range[1] <= 0: left_range = None
     if right_range[0] >= n_frames: right_range = None
 
-    if left_range[0] < 0 : left_range[0] = 0
-    if right_range[1] >= n_frames: right_range[1] = n_frames - 1
+    if left_range is not None:
+        if left_range[0] < 0 : left_range[0] = 0
+    if right_range is not None:
+        if right_range[1] >= n_frames: right_range[1] = n_frames - 1
 
     return (left_range, right_range)
 
@@ -64,7 +66,7 @@ def find_maxima(key_frame, delta, maximas, n_frames, frame_rate=30, srange=1.0):
 
 
 
-def analyze_motion(area_data, audio_beats, au_instance, group_size=4):
+def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4):
     n_frames = len(area_data)
     n_beats = len(audio_beats)
     local_maxima = signal.argrelextrema(area_data, np.greater, axis=0, order=3)
@@ -85,8 +87,8 @@ def analyze_motion(area_data, audio_beats, au_instance, group_size=4):
         block = area_data[st:ed]
 
         key_frame_idx, delta = find_steepest(block, st)
-        key_frame_idx = find_maxima(key_frame_idx, delta, maxima_dict, n_frames)
-        left, right = find_search_range(key_frame_idx, n_frames, 30)
+        key_frame_idx = int(find_maxima(key_frame_idx, delta, maxima_dict, n_frames, frame_rate=framerate))
+        left, right = find_search_range(key_frame_idx, n_frames, framerate)
 
         scale = 1.35
         start_from = None
