@@ -79,6 +79,11 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
         maxima_dict[item] = 1
     # a = Audio('resources_video/spring_origin.mp4')
     effect_list = []
+
+    start_list = []
+    key_list = []
+    end_list = []
+
     for i in range(2, n_beats, group_size):
         if (i + group_size - n_beats)/group_size > 0.5: break
         # if i + group_size >= n_beats: break
@@ -127,35 +132,46 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
             effect_list.append(effect_dict)
 
     print(effect_list)
-    return effect_list
+    return effect_list, start_list, key_list, end_list
 
-def visualization(area_data):
+def visualization(area_data, start_list, key_list, end_list, title, beats):
     import matplotlib.pyplot as plt
+    import os
     x_data = range(len(area_data))
     # create figure and axis objects with subplots()
     fig,ax = plt.subplots()
-    # make a plot
-    ax.plot(x_data, area_data, color="green", linestyle='-')
+    # motion data
+    ax.plot(x_data, area_data, color="green",label="motion" , linestyle='-')
+
+    # audio data
+    vis_y = [area_data[i] for i in beats] 
+    print("beat:" ,beats)
+    print("vis_y:",vis_y)
+    plt.scatter( beats, vis_y, color = "red", label = "audio", marker="x",  s = 10)
+
+    # effect data
     vis_y = [area_data[i] for i in start_list]
-    plt.scatter(start_list, vis_y, color = "black", s = 25)
+    plt.scatter(start_list, vis_y, color = "black", label = "start effect",s = 25)
 
     vis_y = [area_data[i] for i in key_list]
-    plt.scatter(key_list, vis_y, color = "blue", s = 25)
+    plt.scatter(key_list, vis_y, color = "blue", label = "key effect", s = 25)
 
     vis_y = [area_data[i] for i in end_list]
-    plt.scatter(end_list, vis_y, color = "black", s = 25)
+    plt.scatter(end_list, vis_y, color = "black", label = "end_effect", s = 25)
 
-    #vis_y = [self.area_data[i] for i in  self.delta_x] 
-    beats = [16,34,51,69,85,103,121,138,156,174,191,208,226,243,260,278, 296,314,330,348,366,383,401,418,436,454, 471,489,506,523,541,558,576,593, 610]
-    vis_y = [area_data[i] for i in beats] 
-    plt.scatter( beats, vis_y, color = "red", marker="x", s = 10)
-    plt.show()
-    plt.savefig("filename.png")
+    ax.legend( loc="upper left", bbox_to_anchor=(1.05, 1.0))
+    plt.tight_layout()
+    #plt.show()
+    if not os.path.exists("vis_result") :
+        os.mkdir("vis_result")
+    plt.savefig("vis_result/{}.png".format(title))
 
-start_list = []
-key_list = []
-end_list = []
-
+def print_performance():
+    #Audio
+    #Motion
+    #Effect Decision
+    #Video Encoding
+    pass
 
 if __name__ == "__main__":
     area_data = np.load( "cache/area_data.npy")
