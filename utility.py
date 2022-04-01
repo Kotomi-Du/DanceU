@@ -1,4 +1,12 @@
 import openshot
+import ffmpeg
+
+
+def get_bitrate(file):
+    probe = ffmpeg.probe(file)
+    video_bitrate = next(s for s in probe['streams'] if s['codec_type'] == 'video')
+    bitrate = int(video_bitrate['bit_rate'])
+    return bitrate
 
 
 def add_effect(video, effect_desc_list):
@@ -162,6 +170,7 @@ def edit_video(video_in_path, video_out_path, effect_desc_list=None, effect_desc
 
     r.Open()         # Open the reader
     r.DisplayInfo()  # Display metadata
+    video_bit_rate = get_bitrate(video_in_path)
 
     # Set up Writer
     w = openshot.FFmpegWriter(video_out_path)
@@ -186,7 +195,7 @@ def edit_video(video_in_path, video_out_path, effect_desc_list=None, effect_desc
                                         r.info.pixel_ratio.den),
                       r.info.interlaced_frame,
                       r.info.top_field_first,
-                      r.info.video_bit_rate)
+                      video_bit_rate)
 
     clip = openshot.Clip(r)
     clip.Open()
