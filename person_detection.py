@@ -88,7 +88,7 @@ def get_model(ie, args):
     return models.SSD(*common_args, labels=args.labels, keep_aspect_ratio_resize=args.keep_aspect_ratio)
 
 def Infer(input_path):
-    bboxes = []
+    bboxes = [[0,0,0,0]]
     args = build_argparser().parse_args()
     log.info('Initializing Inference Engine...')
     ie = IECore()
@@ -120,23 +120,27 @@ def Infer(input_path):
             start_time = frame_meta['start_time']
 
             size = frame.shape[:2]
+            bbox = None
             for detection in detections:
                 if detection.score > args.prob_threshold:
                     xmin = max(int(detection.xmin), 0)
                     ymin = max(int(detection.ymin), 0)
                     xmax = min(int(detection.xmax), size[1])
                     ymax = min(int(detection.ymax), size[0])
-                    cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0,250,0), 2)
-                    cv2.putText(frame, '{} {:.1%}'.format("person", detection.score),
-                        (xmin, ymin - 7), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0,250,0), 1)
-                    bboxes.append([xmin, ymin, xmax,ymax])
+                    bbox = [xmin, ymin, xmax,ymax]
+                    # cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0,250,0), 2)
+                    # cv2.putText(frame, '{} {:.1%}'.format("person", detection.score),
+                    #     (xmin, ymin - 7), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0,250,0), 1)
                     break
+            if bbox is not None:
+                bboxes.append(bbox)
+            else:
+                bboxes.append(bboxes[-1])
 
             next_frame_id_to_show += 1
-
+            #cv2.imwrite(r"detection_result/"+str(next_frame_id_to_show)+".png",frame)
             if not args.no_show:
                 cv2.imshow('Detection Results', frame)
-                #cv2.imwrite("D:\\pose_data\\output\\"+str(next_frame_id_to_show)+".png",frame)
                 key = cv2.waitKey(1)
                 ESC_KEY = 27
                 # Quit.
@@ -174,29 +178,33 @@ def Infer(input_path):
         detections, frame_meta = results
         frame = frame_meta['frame']
         start_time = frame_meta['start_time']
-
-
         size = frame.shape[:2]
+        bbox = None
         for detection in detections:
             if detection.score > args.prob_threshold:
                 xmin = max(int(detection.xmin), 0)
                 ymin = max(int(detection.ymin), 0)
                 xmax = min(int(detection.xmax), size[1])
                 ymax = min(int(detection.ymax), size[0])
-                cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0,250,0), 2)
-                cv2.putText(frame, '{} {:.1%}'.format("person", detection.score),
-                    (xmin, ymin - 7), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0,250,0), 1)
+                bbox = [xmin, ymin, xmax,ymax]
+                # cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0,250,0), 2)
+                # cv2.putText(frame, '{} {:.1%}'.format("person", detection.score),
+                #     (xmin, ymin - 7), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0,250,0), 1)
+                break
 
+        if bbox is not None:
+            bboxes.append(bbox)
+        else:
+            bboxes.append(bboxes[-1])
+        #cv2.imwrite(r"detection_result/"+str(next_frame_id_to_show)+".png",frame)
         if not args.no_show:
             cv2.imshow('Detection Results', frame)
-            #cv2.imwrite("D:\\pose_data\\output\\"+str(next_frame_id)+".png",frame)
             key = cv2.waitKey(1)
-
             ESC_KEY = 27
             # Quit.
             if key in {ord('q'), ord('Q'), ESC_KEY}:
                 break
-    return bboxes
+    return bboxes[1:]
 
 
 if __name__ == '__main__':

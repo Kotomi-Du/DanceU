@@ -145,8 +145,6 @@ def visualization(area_data, start_list, key_list, end_list, title, beats):
 
     # audio data
     vis_y = [area_data[i] for i in beats] 
-    print("beat:" ,beats)
-    print("vis_y:",vis_y)
     plt.scatter( beats, vis_y, color = "red", label = "audio", marker="x",  s = 10)
 
     # effect data
