@@ -130,10 +130,12 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
             end_list.append(end_to)
 
             effect_list.append(effect_dict)
-
+        #ToDo: debug start
+        # print("group {}:".format(str(i)),left,right,start_from, key_frame_idx, end_to)
+        #ToDo: debug end
     print(effect_list)
     return effect_list, start_list, key_list, end_list
-
+#ToDo: debug start
 def visualization(area_data, start_list, key_list, end_list, title, beats):
     import matplotlib.pyplot as plt
     import os
@@ -159,7 +161,6 @@ def visualization(area_data, start_list, key_list, end_list, title, beats):
 
     ax.legend( loc="upper left", bbox_to_anchor=(1.05, 1.0))
     plt.tight_layout()
-    #plt.show()
     if not os.path.exists("vis_result") :
         os.mkdir("vis_result")
     plt.savefig("vis_result/{}.png".format(title))
@@ -170,6 +171,7 @@ def print_performance():
     #Effect Decision
     #Video Encoding
     pass
+#ToDo: debug end
 
 if __name__ == "__main__":
     area_data = np.load( "cache/area_data.npy")

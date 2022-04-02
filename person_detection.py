@@ -128,9 +128,11 @@ def Infer(input_path):
                     xmax = min(int(detection.xmax), size[1])
                     ymax = min(int(detection.ymax), size[0])
                     bbox = [xmin, ymin, xmax,ymax]
+                    #ToDo: debug start
                     # cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0,250,0), 2)
                     # cv2.putText(frame, '{} {:.1%}'.format("person", detection.score),
                     #     (xmin, ymin - 7), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0,250,0), 1)
+                    #ToDo: debug end
                     break
             if bbox is not None:
                 bboxes.append(bbox)
@@ -138,7 +140,12 @@ def Infer(input_path):
                 bboxes.append(bboxes[-1])
 
             next_frame_id_to_show += 1
+            #ToDo: debug start
+            # import os
+            # if not os.path.exists("detection_result") :
+            #     os.mkdir("detection_result")
             #cv2.imwrite(r"detection_result/"+str(next_frame_id_to_show)+".png",frame)
+            #ToDo: debug end
             if not args.no_show:
                 cv2.imshow('Detection Results', frame)
                 key = cv2.waitKey(1)
@@ -187,16 +194,24 @@ def Infer(input_path):
                 xmax = min(int(detection.xmax), size[1])
                 ymax = min(int(detection.ymax), size[0])
                 bbox = [xmin, ymin, xmax,ymax]
+                #ToDo: debug start
                 # cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0,250,0), 2)
                 # cv2.putText(frame, '{} {:.1%}'.format("person", detection.score),
                 #     (xmin, ymin - 7), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0,250,0), 1)
+                #ToDo: debug end
                 break
 
         if bbox is not None:
             bboxes.append(bbox)
         else:
             bboxes.append(bboxes[-1])
-        #cv2.imwrite(r"detection_result/"+str(next_frame_id_to_show)+".png",frame)
+
+        #ToDo: debug start
+        # import os
+        # if not os.path.exists("detection_result") :
+        #     os.mkdir("detection_result")
+        # cv2.imwrite(r"detection_result/"+str(next_frame_id_to_show)+".png",frame)
+        #ToDo: debug end
         if not args.no_show:
             cv2.imshow('Detection Results', frame)
             key = cv2.waitKey(1)
