@@ -3,9 +3,9 @@ import os
 
 from person_detection import Infer
 from audio import Audio
-from motion2 import preprocess_data, analyze_motion, visualization
+from motion2 import preprocess_data, analyze_motion
 from effect import gen_effects
-from visualization import draw_shapes_to_special_images
+from visualization import draw_shapes_to_special_images, visualization
 
 def main(video_path, area_data, debug=False):
     a = Audio(video_path)

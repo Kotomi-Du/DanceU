@@ -141,53 +141,7 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
         #ToDo: debug end
     print(effect_list)
     return effect_list, start_list, key_list, end_list, zoom_scale_list, group_list
-#ToDo: debug start
-def visualization(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
-    import matplotlib.pyplot as plt
-    import os
-    x_data = range(len(area_data))
-    # create figure and axis objects with subplots()
-    fig,ax = plt.subplots()
-    # motion data
-    ax.plot(x_data, area_data, color="green",label="motion" , linestyle='-')
 
-    # audio data
-    # vis_y = [area_data[i] for i in beats]
-    # plt.scatter( beats, vis_y, color = "red", label = "audio", marker="x",  s = 10)
-
-    for beat in beats:
-        if beat in group_list:  # group boundaries
-            plt.axvline(x=beat, color='b', linestyle='--')
-        else:
-            plt.axvline(x=beat, color='y', linestyle='--')
-
-    # effect data
-    vis_y = [area_data[i] for i in start_list]
-    plt.scatter(start_list, vis_y, color = "black", label = "start effect",s = 25)
-
-    vis_y = [area_data[i] for i in key_list]
-    plt.scatter(key_list, vis_y, color = "blue", label = "key effect", s = 25)
-
-    # add scale info next to the key point
-    for i, scale in enumerate(zoom_scale_list):
-        ax.annotate(scale, (key_list[i], vis_y[i]))
-
-    vis_y = [area_data[i] for i in end_list]
-    plt.scatter(end_list, vis_y, color = "black", label = "end_effect", s = 25)
-
-    ax.legend( loc="upper left", bbox_to_anchor=(1.05, 1.0))
-    plt.tight_layout()
-    if not os.path.exists("vis_result") :
-        os.mkdir("vis_result")
-    plt.savefig("vis_result/{}.png".format(title))
-
-def print_performance():
-    #Audio
-    #Motion
-    #Effect Decision
-    #Video Encoding
-    pass
-#ToDo: debug end
 
 if __name__ == "__main__":
     area_data = np.load( "cache/area_data.npy")

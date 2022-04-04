@@ -42,3 +42,49 @@ def draw_shapes_to_special_images(img_folder, start_list, key_list, end_list, be
     draw_circle_to_images(img_folder, key_list, pos_right_top3, radius, blue)
     draw_circle_to_images(img_folder, end_list, pos_right_top4, radius, black)
 
+
+def visualization(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
+    import matplotlib.pyplot as plt
+    x_data = range(len(area_data))
+    # create figure and axis objects with subplots()
+    fig,ax = plt.subplots()
+    # motion data
+    ax.plot(x_data, area_data, color="green",label="motion" , linestyle='-')
+
+    # audio data
+    # vis_y = [area_data[i] for i in beats]
+    # plt.scatter( beats, vis_y, color = "red", label = "audio", marker="x",  s = 10)
+
+    for beat in beats:
+        if beat in group_list:  # group boundaries
+            plt.axvline(x=beat, color='b', linestyle='--')
+        else:
+            plt.axvline(x=beat, color='y', linestyle='--')
+
+    # effect data
+    vis_y = [area_data[i] for i in start_list]
+    plt.scatter(start_list, vis_y, color = "black", label = "start effect",s = 25)
+
+    vis_y = [area_data[i] for i in key_list]
+    plt.scatter(key_list, vis_y, color = "blue", label = "key effect", s = 25)
+
+    # add scale info next to the key point
+    for i, scale in enumerate(zoom_scale_list):
+        ax.annotate(scale, (key_list[i], vis_y[i]))
+
+    vis_y = [area_data[i] for i in end_list]
+    plt.scatter(end_list, vis_y, color = "black", label = "end_effect", s = 25)
+
+    ax.legend( loc="upper left", bbox_to_anchor=(1.05, 1.0))
+    plt.tight_layout()
+    if not os.path.exists("vis_result") :
+        os.mkdir("vis_result")
+    plt.savefig("vis_result/{}.png".format(title))
+
+
+def print_performance():
+    #Audio
+    #Motion
+    #Effect Decision
+    #Video Encoding
+    pass
