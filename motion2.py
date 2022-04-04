@@ -83,6 +83,8 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
     start_list = []
     key_list = []
     end_list = []
+    zoom_scale_list = []
+    group_list = []
 
     for i in range(2, n_beats, group_size):
         if (i + group_size - n_beats)/group_size > 0.5: break
@@ -90,6 +92,9 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
         st = audio_beats[i]
         ed = audio_beats[i+group_size] if i+group_size < n_beats else audio_beats[n_beats-1]
         block = area_data[st:ed]
+
+        group_list.append(st)
+        group_list.append(ed)
 
         key_frame_idx, delta = find_steepest(block, st)
         key_frame_idx = int(find_maxima(key_frame_idx, delta, maxima_dict, n_frames, frame_rate=framerate))
@@ -128,15 +133,16 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
             start_list.append(start_from)
             key_list.append(key_frame_idx)
             end_list.append(end_to)
+            zoom_scale_list.append(scale)
 
             effect_list.append(effect_dict)
         #ToDo: debug start
         # print("group {}:".format(str(i)),left,right,start_from, key_frame_idx, end_to)
         #ToDo: debug end
     print(effect_list)
-    return effect_list, start_list, key_list, end_list
+    return effect_list, start_list, key_list, end_list, zoom_scale_list, group_list
 #ToDo: debug start
-def visualization(area_data, start_list, key_list, end_list, title, beats):
+def visualization(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
     import matplotlib.pyplot as plt
     import os
     x_data = range(len(area_data))
@@ -146,8 +152,14 @@ def visualization(area_data, start_list, key_list, end_list, title, beats):
     ax.plot(x_data, area_data, color="green",label="motion" , linestyle='-')
 
     # audio data
-    vis_y = [area_data[i] for i in beats] 
-    plt.scatter( beats, vis_y, color = "red", label = "audio", marker="x",  s = 10)
+    # vis_y = [area_data[i] for i in beats]
+    # plt.scatter( beats, vis_y, color = "red", label = "audio", marker="x",  s = 10)
+
+    for beat in beats:
+        if beat in group_list:  # group boundaries
+            plt.axvline(x=beat, color='b', linestyle='--')
+        else:
+            plt.axvline(x=beat, color='y', linestyle='--')
 
     # effect data
     vis_y = [area_data[i] for i in start_list]
@@ -155,6 +167,10 @@ def visualization(area_data, start_list, key_list, end_list, title, beats):
 
     vis_y = [area_data[i] for i in key_list]
     plt.scatter(key_list, vis_y, color = "blue", label = "key effect", s = 25)
+
+    # add scale info next to the key point
+    for i, scale in enumerate(zoom_scale_list):
+        ax.annotate(scale, (key_list[i], vis_y[i]))
 
     vis_y = [area_data[i] for i in end_list]
     plt.scatter(end_list, vis_y, color = "black", label = "end_effect", s = 25)

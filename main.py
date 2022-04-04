@@ -14,10 +14,10 @@ def main(video_path, area_data):
     beats = []
     for k, v in audio_beats.items(): beats.append(k)
     area_data = preprocess_data(area_data)
-    res, start_list, key_list, end_list = analyze_motion(area_data, beats, a, framerate, group_size=4)
+    res, start_list, key_list, end_list, zoom_scale_list, group_list = analyze_motion(area_data, beats, a, framerate, group_size=4)
     out_path = './output/{}_out.mp4'.format(video_title)
     gen_effects(res,video_in_path=video_path, video_out_path=out_path)
-    visualization(area_data, start_list, key_list, end_list, video_title, beats)
+    visualization(area_data, start_list, key_list, end_list, video_title, beats, group_list, zoom_scale_list)
 
 def calc_area(video_path):
     bboxes = Infer(video_path)
