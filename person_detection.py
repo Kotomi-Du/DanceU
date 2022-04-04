@@ -5,6 +5,7 @@ import sys
 from argparse import ArgumentParser, SUPPRESS
 from pathlib import Path
 from time import perf_counter
+from visualization import draw_text
 
 import cv2
 import numpy as np
@@ -19,24 +20,6 @@ from ov_backend.images_capture import open_images_capture
 from ov_backend.helpers import resolution
 logging.basicConfig(format='[ %(levelname)s ] %(message)s', level=logging.INFO, stream=sys.stdout)
 log = logging.getLogger()
-
-
-def draw_text(img, text,
-              font=cv2.FONT_HERSHEY_PLAIN,
-              pos=(0, 0),
-              font_scale=3,
-              font_thickness=2,
-              text_color=(0, 255, 0),
-              text_color_bg=(0, 0, 0)
-              ):
-
-    x, y = pos
-    text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
-    text_w, text_h = text_size
-    cv2.rectangle(img, pos, (x + text_w, y + text_h), text_color_bg, -1)
-    cv2.putText(img, text, (x, y + text_h + font_scale - 1), font, font_scale, text_color, font_thickness)
-
-    return text_size
 
 
 def build_argparser():
@@ -112,11 +95,9 @@ def Infer(input_path, debug=False):
         import os
         video_name=input_path.split('/')[-1].split('.')[0]
         infer_debug_main_folder = 'detection_result'
-        if not os.path.exists(infer_debug_main_folder):
-            os.mkdir(infer_debug_main_folder)
         infer_debug_folder = '{}/{}'.format(infer_debug_main_folder, video_name)
         if not os.path.exists(infer_debug_folder):
-            os.mkdir(infer_debug_folder)
+            os.makedirs(infer_debug_folder, exist_ok=True)
 
     bboxes = [[0,0,0,0]]
     args = build_argparser().parse_args()
