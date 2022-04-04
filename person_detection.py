@@ -20,6 +20,25 @@ from ov_backend.helpers import resolution
 logging.basicConfig(format='[ %(levelname)s ] %(message)s', level=logging.INFO, stream=sys.stdout)
 log = logging.getLogger()
 
+
+def draw_text(img, text,
+              font=cv2.FONT_HERSHEY_PLAIN,
+              pos=(0, 0),
+              font_scale=3,
+              font_thickness=2,
+              text_color=(0, 255, 0),
+              text_color_bg=(0, 0, 0)
+              ):
+
+    x, y = pos
+    text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
+    text_w, text_h = text_size
+    cv2.rectangle(img, pos, (x + text_w, y + text_h), text_color_bg, -1)
+    cv2.putText(img, text, (x, y + text_h + font_scale - 1), font, font_scale, text_color, font_thickness)
+
+    return text_size
+
+
 def build_argparser():
     parser = ArgumentParser(add_help=False)
     args = parser.add_argument_group('Options')
@@ -151,6 +170,8 @@ def Infer(input_path, debug=False):
 
             next_frame_id_to_show += 1
             if debug is True and infer_debug_folder is not None:
+                # draw frame id to the left top position of an image
+                draw_text(frame, '{}'.format(next_frame_id_to_show), pos=(10, 10))
                 cv2.imwrite("{}/{}.png".format(infer_debug_folder, str(next_frame_id_to_show)), frame)
 
             if not args.no_show:
@@ -213,6 +234,8 @@ def Infer(input_path, debug=False):
             bboxes.append(bboxes[-1])
 
         if debug is True and infer_debug_folder is not None:
+            # draw frame id to the left top position of an image
+            draw_text(frame, '{}'.format(next_frame_id_to_show), pos=(10, 10))
             cv2.imwrite("{}/{}.png".format(infer_debug_folder, str(next_frame_id_to_show)), frame)
 
         if not args.no_show:
