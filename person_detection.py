@@ -5,6 +5,7 @@ import sys
 from argparse import ArgumentParser, SUPPRESS
 from pathlib import Path
 from time import perf_counter
+from visualization import draw_text
 
 import cv2
 import numpy as np
@@ -19,6 +20,7 @@ from ov_backend.images_capture import open_images_capture
 from ov_backend.helpers import resolution
 logging.basicConfig(format='[ %(levelname)s ] %(message)s', level=logging.INFO, stream=sys.stdout)
 log = logging.getLogger()
+
 
 def build_argparser():
     parser = ArgumentParser(add_help=False)
@@ -87,7 +89,16 @@ def get_model(ie, args):
     common_args = (ie, args.model, input_transform)
     return models.SSD(*common_args, labels=args.labels, keep_aspect_ratio_resize=args.keep_aspect_ratio)
 
-def Infer(input_path):
+def Infer(input_path, debug=False):
+    infer_debug_folder = None
+    if debug is True:
+        import os
+        video_name=input_path.split('/')[-1].split('.')[0]
+        infer_debug_main_folder = 'detection_result'
+        infer_debug_folder = '{}/{}'.format(infer_debug_main_folder, video_name)
+        if not os.path.exists(infer_debug_folder):
+            os.makedirs(infer_debug_folder, exist_ok=True)
+
     bboxes = [[0,0,0,0]]
     args = build_argparser().parse_args()
     log.info('Initializing Inference Engine...')
@@ -128,11 +139,10 @@ def Infer(input_path):
                     xmax = min(int(detection.xmax), size[1])
                     ymax = min(int(detection.ymax), size[0])
                     bbox = [xmin, ymin, xmax,ymax]
-                    #ToDo: debug start
-                    # cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0,250,0), 2)
-                    # cv2.putText(frame, '{} {:.1%}'.format("person", detection.score),
-                    #     (xmin, ymin - 7), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0,250,0), 1)
-                    #ToDo: debug end
+                    if debug is True and infer_debug_folder is not None:
+                        cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0,250,0), 2)
+                        cv2.putText(frame, '{} {:.1%}'.format("person", detection.score),
+                            (xmin, ymin - 7), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0,250,0), 1)
                     break
             if bbox is not None:
                 bboxes.append(bbox)
@@ -140,12 +150,11 @@ def Infer(input_path):
                 bboxes.append(bboxes[-1])
 
             next_frame_id_to_show += 1
-            #ToDo: debug start
-            # import os
-            # if not os.path.exists("detection_result") :
-            #     os.mkdir("detection_result")
-            #cv2.imwrite(r"detection_result/"+str(next_frame_id_to_show)+".png",frame)
-            #ToDo: debug end
+            if debug is True and infer_debug_folder is not None:
+                # draw frame id to the left top position of an image
+                draw_text(frame, '{}'.format(next_frame_id_to_show), pos=(10, 10))
+                cv2.imwrite("{}/{}.png".format(infer_debug_folder, str(next_frame_id_to_show)), frame)
+
             if not args.no_show:
                 cv2.imshow('Detection Results', frame)
                 key = cv2.waitKey(1)
@@ -194,11 +203,10 @@ def Infer(input_path):
                 xmax = min(int(detection.xmax), size[1])
                 ymax = min(int(detection.ymax), size[0])
                 bbox = [xmin, ymin, xmax,ymax]
-                #ToDo: debug start
-                # cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0,250,0), 2)
-                # cv2.putText(frame, '{} {:.1%}'.format("person", detection.score),
-                #     (xmin, ymin - 7), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0,250,0), 1)
-                #ToDo: debug end
+                if debug is True and infer_debug_folder is not None:
+                    cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0,250,0), 2)
+                    cv2.putText(frame, '{} {:.1%}'.format("person", detection.score),
+                        (xmin, ymin - 7), cv2.FONT_HERSHEY_COMPLEX, 0.6, (0,250,0), 1)
                 break
 
         if bbox is not None:
@@ -206,12 +214,11 @@ def Infer(input_path):
         else:
             bboxes.append(bboxes[-1])
 
-        #ToDo: debug start
-        # import os
-        # if not os.path.exists("detection_result") :
-        #     os.mkdir("detection_result")
-        # cv2.imwrite(r"detection_result/"+str(next_frame_id_to_show)+".png",frame)
-        #ToDo: debug end
+        if debug is True and infer_debug_folder is not None:
+            # draw frame id to the left top position of an image
+            draw_text(frame, '{}'.format(next_frame_id_to_show), pos=(10, 10))
+            cv2.imwrite("{}/{}.png".format(infer_debug_folder, str(next_frame_id_to_show)), frame)
+
         if not args.no_show:
             cv2.imshow('Detection Results', frame)
             key = cv2.waitKey(1)
