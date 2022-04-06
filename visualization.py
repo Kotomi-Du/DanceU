@@ -65,7 +65,9 @@ def visualization(area_data, start_list, key_list, end_list, title, beats, group
     import matplotlib.pyplot as plt
     x_data = range(len(area_data))
     # create figure and axis objects with subplots()
-    fig,ax = plt.subplots()
+    figure = plt.figure(figsize=(len(area_data)/35,5))
+    ax = figure.add_subplot()
+
     # motion data
     ax.plot(x_data, area_data, color="green",label="motion" , linestyle='-')
 
@@ -81,23 +83,23 @@ def visualization(area_data, start_list, key_list, end_list, title, beats, group
 
     # effect data
     vis_y = [area_data[i] for i in start_list]
-    plt.scatter(start_list, vis_y, color = "black", label = "start effect",s = 25)
+    ax.scatter(start_list, vis_y, color = "black", label = "start effect",s = 25)
 
     vis_y = [area_data[i] for i in key_list]
-    plt.scatter(key_list, vis_y, color = "blue", label = "key effect", s = 25)
+    ax.scatter(key_list, vis_y, color = "blue", label = "key effect", s = 25)
 
     # add scale info next to the key point
     for i, scale in enumerate(zoom_scale_list):
-        ax.annotate(scale, (key_list[i], vis_y[i]))
+        ax.annotate(round(scale,2), (key_list[i], vis_y[i]))
 
     vis_y = [area_data[i] for i in end_list]
-    plt.scatter(end_list, vis_y, color = "black", label = "end_effect", s = 25)
+    ax.scatter(end_list, vis_y, color = "black", label = "end_effect", s = 25)
 
     ax.legend( loc="upper left", bbox_to_anchor=(1.05, 1.0))
     plt.tight_layout()
     if not os.path.exists("vis_result") :
         os.mkdir("vis_result")
-    plt.savefig("vis_result/{}.png".format(title))
+    figure.savefig("vis_result/{}.png".format(title))
 
 
 def print_performance():
