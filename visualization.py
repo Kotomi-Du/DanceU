@@ -63,6 +63,7 @@ def draw_shapes_to_special_images(img_folder, start_list, key_list, end_list, be
 
 def visualization(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
     import matplotlib.pyplot as plt
+    import numpy as np
     x_data = range(len(area_data))
     # create figure and axis objects with subplots()
     figure = plt.figure(figsize=(len(area_data)/35,5))
@@ -70,6 +71,7 @@ def visualization(area_data, start_list, key_list, end_list, title, beats, group
 
     # motion data
     ax.plot(x_data, area_data, color="green",label="motion" , linestyle='-')
+    ax.xaxis.set_ticks(np.arange(np.min(x_data), np.max(x_data), 50))
 
     # audio data
     # vis_y = [area_data[i] for i in beats]
