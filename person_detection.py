@@ -27,7 +27,7 @@ def build_argparser():
     args = parser.add_argument_group('Options')
     args.add_argument('--video-path', type=str, default='resources_video/spring_origin.mp4', help='video path')
     args.add_argument('--output-dir', type=str, default='output', help='output dir')
-    args.add_argument('--debug', default=False, help='debug')
+    parser.add_argument('--debug', help="Optional. Don't show output.", action='store_true')
     args.add_argument('-h', '--help', action='help', default=SUPPRESS, help='Show this help message and exit.')
     args.add_argument('-m', '--model', help='Optional. Path to an .xml file with a trained model.',
                       default="ov_backend/model_ir/person-detection-0200.xml", type=Path)
