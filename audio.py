@@ -14,7 +14,10 @@ class Audio:
         self.audio_onsets = []
 
         self.__analyze_audio()
-        pass
+        self.beats = []
+        for k, v in self.audio_beats.items():
+          self.beats.append(k)
+        
 
     def is_audio_beat(self, motion_beat_frame, slack_range=8) -> bool:
         ''' Return whether there is a matched audio beat.

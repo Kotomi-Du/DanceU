@@ -57,7 +57,7 @@ class EffectDecision:
 
         return res
 
-    def analyze_motion(self, area_data, audio_beats, au_instance, framerate, group_size=4):
+    def get_effect_list(self, area_data, audio_beats, au_instance, framerate, group_size=4):
         n_frames = len(area_data)
         n_beats = len(audio_beats)
         local_maxima = signal.argrelextrema(area_data, np.greater, axis=0, order=3)
@@ -96,10 +96,10 @@ class EffectDecision:
             end_to = None
 
             if left is not None and right is not None:
-                for i in range(left[1], left[0]-1, -1):
-                    if i in minima_dict: start_from = i
-                for i in range(right[0], right[1]+1):
-                    if i in minima_dict: end_to = i
+                for j in range(left[1], left[0]-1, -1):
+                    if j in minima_dict: start_from = i
+                for j in range(right[0], right[1]+1):
+                    if j in minima_dict: end_to = i
             
             if start_from is not None and end_to is not None:
                 res = au_instance.get_effect_advice(start_from, slack_range=10)

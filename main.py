@@ -14,15 +14,12 @@ def main(video_path, output_dir, debug):
 
     # analyze audio
     ado = Audio(video_path)
-    audio_beats = ado.audio_beats
     framerate = ado.framerate
-    beats = []
-    for k, v in audio_beats.items():
-        beats.append(k)
+    beats = ado.beats
 
     # get effects based on music and motion
     eff = EffectDecision(debug=debug)
-    res, start_list, key_list, end_list, zoom_scale_list, group_list = eff.analyze_motion(area_data, beats, ado, framerate, group_size=4)
+    res, start_list, key_list, end_list, zoom_scale_list, group_list = eff.get_effect_list(area_data, beats, ado, framerate, group_size=4)
 
     # generate edited video
     video_name = os.path.splitext(os.path.basename(video_path))[0]
