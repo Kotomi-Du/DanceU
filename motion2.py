@@ -86,13 +86,14 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
     zoom_scale_list = []
     group_list = []
 
+    pre_end_to = -1
+    pre_start_from = -1
     for i in range(2, n_beats, group_size):
         if (i + group_size - n_beats)/group_size > 0.5: break
         # if i + group_size >= n_beats: break
         st = audio_beats[i]
         ed = audio_beats[i+group_size] if i+group_size < n_beats else audio_beats[n_beats-1]
         block = area_data[st:ed]
-
         group_list.append(st)
         group_list.append(ed)
 
@@ -105,11 +106,11 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
         end_to = None
 
         if left is not None and right is not None:
-            for i in range(left[1], left[0]-1, -1):
-                if i in minima_dict: start_from = i
-            for i in range(right[0], right[1]+1):
-                if i in minima_dict: end_to = i
-        
+            for j in range(left[1], left[0]-1, -1):
+                if j in minima_dict: start_from = j
+            for j in range(right[0], right[1]+1):
+                if j in minima_dict: end_to = j
+
         if start_from is not None and end_to is not None:
             res = au_instance.get_effect_advice(start_from, slack_range=10)
             if res['is_audio_beat']: 
@@ -120,6 +121,11 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
             res = au_instance.get_effect_advice(end_to, slack_range=10)
             if res['is_audio_beat']: 
                 end_to = res['key_frame']
+            
+            if start_from != pre_start_from and start_from < pre_end_to:
+                start_from = pre_end_to
+            pre_end_to = end_to
+            pre_start_from = start_from
 
             real_scale = area_data[key_frame_idx]/ area_data[start_from]
             scale = max(min(real_scale, 1.7), 1.35)
@@ -137,7 +143,7 @@ def analyze_motion(area_data, audio_beats, au_instance, framerate, group_size=4)
 
             effect_list.append(effect_dict)
         #ToDo: debug start
-        # print("group {}:".format(str(i)),left,right,start_from, key_frame_idx, end_to)
+        # print("group {}:".format(i),left,right,start_from, key_frame_idx, end_to)
         #ToDo: debug end
     print(effect_list)
     return effect_list, start_list, key_list, end_list, zoom_scale_list, group_list
