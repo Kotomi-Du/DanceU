@@ -14,7 +14,10 @@ class Audio:
         self.audio_onsets = []
 
         self.__analyze_audio()
-        pass
+        self.beats = []
+        for k, v in self.audio_beats.items():
+          self.beats.append(k)
+        
 
     def is_audio_beat(self, motion_beat_frame, slack_range=8) -> bool:
         ''' Return whether there is a matched audio beat.
@@ -57,6 +60,7 @@ class Audio:
         res : dict
           - {'is_audio_beat':False, 'start_frame':-1, 'key_frame':-1, 'speed':-1}
         '''
+        
         assert isinstance(motion_beat_frame, int), 'Input parameter must be integer'
         assert isinstance(slack_range, int), 'Input parameter must be integer'
         assert isinstance(farthest_onset, int), 'Input parameter must be integer'

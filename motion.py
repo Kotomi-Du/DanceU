@@ -1,29 +1,28 @@
-
-
+import numpy as np
+from person_detection import Infer
 class Motion:
-    def __init__(self, video_path) -> None:
-        self.motion2d = self.__get_2dpose()
-        self.motion3d = self.__get_2dpose()
+    def __init__(self, video_path, debug):
+        self.video_path = video_path
+        bounding_boxes = Infer(video_path, debug=debug)
+        t_area_data = self.calc_area(bounding_boxes)
+        self.area_data = self.preprocess_data(t_area_data)
 
-        
-        '''
-        motion_beat
-        key: keyframe_index of beat point 
-        value： motion_effect_hint  list including: left, right, up, down, forward, backward(need to finetune)
-        e.g.  5: [-10, 0 , 0 , 0]
-        '''
-        self.motion_beats = dict()
+    def preprocess_data(self, data, kernel_size = 10):
+        ##rectify some data 361-366
+        # data[361:367] = data[360]
+        #average smooth
+        kernel = np.ones(kernel_size) / kernel_size
+        temp = np.convolve(data, kernel, mode='same')
+        affected_idx = int(kernel_size/2)
+        data[affected_idx:-affected_idx] =  temp[affected_idx:-affected_idx] 
 
-        self.__analyze_motion()
-
-    def __get_2dpose(self):
-        pass
+        return data
     
-    def __get_3dpose(self):
-        pass
+    def calc_area(self, bboxes):
+        area_data = []
+        for bbox in bboxes:
+            area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
+            area_data.append(area)
+        area_data = np.array(area_data)
 
-    def __analyze_motion(self):
-        pass
-
-    def __analyze_pose_direction(self, frame_idx):
-        pass
+        return area_data
