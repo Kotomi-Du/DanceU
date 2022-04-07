@@ -97,9 +97,9 @@ class EffectDecision:
 
             if left is not None and right is not None:
                 for j in range(left[1], left[0]-1, -1):
-                    if j in minima_dict: start_from = i
+                    if j in minima_dict: start_from = j
                 for j in range(right[0], right[1]+1):
-                    if j in minima_dict: end_to = i
+                    if j in minima_dict: end_to = j
             
             if start_from is not None and end_to is not None:
                 res = au_instance.get_effect_advice(start_from, slack_range=10)
