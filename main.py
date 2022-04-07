@@ -38,7 +38,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--video-path', type=str, default='resources_video/spring_origin.mp4', help='video path')
     parser.add_argument('--output-dir', type=str, default='output', help='output dir')
-    parser.add_argument('--debug', default=False, help='debug')
+    parser.add_argument('--debug', help="Optional. Don't show output.", action='store_true')
     args = parser.parse_args()
 
     if not os.path.exists(args.video_path):
