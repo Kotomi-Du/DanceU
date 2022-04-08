@@ -24,8 +24,12 @@ def draw_circle_to_images(img_folder, img_idx_list, pos, radius, color):
     import cv2
     # draw shapes to the detection results
     for img_idx in img_idx_list:
+        if img_idx is None:
+            continue
         img_name='{}/{}.png'.format(img_folder, img_idx)
         img = cv2.imread(img_name)
+        if img is None:
+            continue
         cv2.circle(img, pos, radius, color, -1)
         cv2.imwrite(img_name, img)
 
@@ -63,6 +67,7 @@ def draw_shapes_to_special_images(img_folder, start_list, key_list, end_list, be
 
 def visualization(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
     import matplotlib.pyplot as plt
+    import numpy as np
     x_data = range(len(area_data))
     # create figure and axis objects with subplots()
     figure = plt.figure(figsize=(len(area_data)/35,5))
@@ -70,6 +75,7 @@ def visualization(area_data, start_list, key_list, end_list, title, beats, group
 
     # motion data
     ax.plot(x_data, area_data, color="green",label="motion" , linestyle='-')
+    ax.xaxis.set_ticks(np.arange(np.min(x_data), np.max(x_data), 50))
 
     # audio data
     # vis_y = [area_data[i] for i in beats]

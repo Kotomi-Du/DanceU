@@ -77,6 +77,10 @@ class EffectDecision:
         zoom_scale_list = []
         group_list = []
 
+        pre_end_to = -1
+        pre_start_from = -1
+        pre_key_frame_idx= -1
+
         for i in range(2, n_beats, group_size):
             if (i + group_size - n_beats)/group_size > 0.5: break
             # if i + group_size >= n_beats: break
@@ -89,31 +93,39 @@ class EffectDecision:
 
             key_frame_idx, delta = self.find_steepest(block, st)
             key_frame_idx = int(self.find_maxima(key_frame_idx, delta, maxima_dict, n_frames, frame_rate=framerate))
-            left, right = self.find_search_range(key_frame_idx, n_frames, framerate)
+            res = au_instance.get_effect_advice(key_frame_idx, slack_range=10)
+            if res['is_audio_beat']: 
+                key_frame_idx = res['key_frame']  
+            if key_frame_idx == pre_key_frame_idx:
+                 continue
 
+            left, right = self.find_search_range(key_frame_idx, n_frames, framerate)
             scale = 1.35
             start_from = None
             end_to = None
 
             if left is not None and right is not None:
                 for j in range(left[1], left[0]-1, -1):
-                    if j in minima_dict: start_from = i
+                    if j in minima_dict: 
+                        start_from = j
                 for j in range(right[0], right[1]+1):
-                    if j in minima_dict: end_to = i
+                    if j in minima_dict:
+                        end_to = j
             
             if start_from is not None and end_to is not None:
                 res = au_instance.get_effect_advice(start_from, slack_range=10)
                 if res['is_audio_beat']: 
-                    start_from = res['key_frame']
-                res = au_instance.get_effect_advice(key_frame_idx, slack_range=10)
-                if res['is_audio_beat']: 
-                    key_frame_idx = res['key_frame']
+                    start_from = res['key_frame']             
                 res = au_instance.get_effect_advice(end_to, slack_range=10)
                 if res['is_audio_beat']: 
                     end_to = res['key_frame']
 
                 real_scale = area_data[key_frame_idx]/ area_data[start_from]
                 scale = max(min(real_scale, 1.7), 1.35)
+
+                #make sure start_from is behind the previous effect
+                if pre_end_to is not None and start_from != pre_start_from and start_from < pre_end_to:
+                    start_from = pre_end_to
 
                 effect_dict={
                 'frame':key_frame_idx, 
@@ -127,6 +139,10 @@ class EffectDecision:
                 zoom_scale_list.append(scale)
 
                 effect_list.append(effect_dict)
+            
+            pre_end_to = end_to
+            pre_start_from = start_from
+            pre_key_frame_idx = key_frame_idx
             #ToDo: debug start
             if self.debug:
                 print("group {}:".format(str(i)),left,right,start_from, key_frame_idx, end_to)
