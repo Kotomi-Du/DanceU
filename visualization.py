@@ -1,6 +1,14 @@
 import cv2
 import os
+import numpy as np
 
+
+class Point:
+    def __init__ (self, x, y):
+        self.x = x
+        self.y = y 
+    def value(self):
+        return [self.x, self.y]
 
 def draw_text(img, text,
               font=cv2.FONT_HERSHEY_PLAIN,
@@ -19,7 +27,29 @@ def draw_text(img, text,
 
     return text_size
 
+def draw_traingle(img_folder, img_idx_list, pos, label, color, radius):
+    import cv2
+    # draw shapes to the detection results
+    for img_idx in img_idx_list:
+        if img_idx is None:
+            continue
+        img_name='{}/{}.png'.format(img_folder, img_idx)
+        img = cv2.imread(img_name)
+        if img is None:
+            continue
+        if label == "start":
+            pt1 = (pos.x - radius, pos.y-radius)
+            pt2 = (pos.x + radius, pos.y)
+            pt3 = (pos.x -radius, pos.y+radius) 
+        if label == "end":
+            pt1 = (pos.x + radius, pos.y-radius)
+            pt2 = (pos.x - radius, pos.y)
+            pt3 = (pos.x +radius, pos.y+radius) 
 
+        triangle_cnt = np.array( [pt1, pt2, pt3] )
+        cv2.drawContours(img, [triangle_cnt], 0, color , -1)
+        cv2.imwrite(img_name, img)
+    
 def draw_circle_to_images(img_folder, img_idx_list, pos, radius, color):
     import cv2
     # draw shapes to the detection results
@@ -30,7 +60,7 @@ def draw_circle_to_images(img_folder, img_idx_list, pos, radius, color):
         img = cv2.imread(img_name)
         if img is None:
             continue
-        cv2.circle(img, pos, radius, color, -1)
+        cv2.circle(img, pos.value(), radius, color, -1)
         cv2.imwrite(img_name, img)
 
 
@@ -44,12 +74,12 @@ def draw_shapes_to_special_images(img_folder, start_list, key_list, end_list, be
     height = first_img.shape[0]
     width = first_img.shape[1]
     radius = int(height/8)
-    pos_right_top1 = (width-radius, radius)
-    pos_right_top2 = (width-radius, radius*3)
-    pos_right_top3 = (width-radius, radius*5)
-    pos_right_top4 = (width-radius, radius*7)
+    pos_right_top1 = Point(width-radius, radius)
+    pos_right_top2 = Point(width-radius, radius*3)
+    pos_right_top3 = Point(width-radius, radius*5)
+    pos_right_top4 = Point(width-radius, radius*7)
 
-    pos_left_bottom = (radius, radius*7)
+    pos_left_bottom = Point(radius, radius*7)
 
     # BGR values
     red = (0, 0, 255)
@@ -58,9 +88,9 @@ def draw_shapes_to_special_images(img_folder, start_list, key_list, end_list, be
     draw_circle_to_images(img_folder, beats, pos_left_bottom, radius, lightcoral)
     if strong_beats is not None:
         draw_circle_to_images(img_folder, strong_beats, pos_left_bottom, radius, red)
-    draw_circle_to_images(img_folder, start_list, pos_right_top2, radius, orange)
+    draw_traingle(img_folder, start_list, pos_right_top2, "start", orange, radius)
     draw_circle_to_images(img_folder, key_list, pos_right_top3, radius, red)
-    draw_circle_to_images(img_folder, end_list, pos_right_top4, radius, orange)
+    draw_traingle(img_folder, end_list, pos_right_top4, "end", orange, radius)
 
 
 def visualization(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
