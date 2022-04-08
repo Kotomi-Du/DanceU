@@ -52,17 +52,15 @@ def draw_shapes_to_special_images(img_folder, start_list, key_list, end_list, be
     pos_left_bottom = (radius, radius*7)
 
     # BGR values
-    black = (0, 0, 0)
     red = (0, 0, 255)
-    green = (0, 255, 0)
-    blue = (255, 0, 0)
-    yellow = (0, 255, 255)
-    draw_circle_to_images(img_folder, beats, pos_left_bottom, radius, yellow)
+    orange = (0, 165, 255)
+    lightcoral = (128, 128, 240) #RGB
+    draw_circle_to_images(img_folder, beats, pos_left_bottom, radius, lightcoral)
     if strong_beats is not None:
         draw_circle_to_images(img_folder, strong_beats, pos_left_bottom, radius, red)
-    draw_circle_to_images(img_folder, start_list, pos_right_top2, radius, black)
-    draw_circle_to_images(img_folder, key_list, pos_right_top3, radius, blue)
-    draw_circle_to_images(img_folder, end_list, pos_right_top4, radius, black)
+    draw_circle_to_images(img_folder, start_list, pos_right_top2, radius, orange)
+    draw_circle_to_images(img_folder, key_list, pos_right_top3, radius, red)
+    draw_circle_to_images(img_folder, end_list, pos_right_top4, radius, orange)
 
 
 def visualization(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
@@ -74,7 +72,7 @@ def visualization(area_data, start_list, key_list, end_list, title, beats, group
     ax = figure.add_subplot()
 
     # motion data
-    ax.plot(x_data, area_data, color="green",label="motion" , linestyle='-')
+    ax.plot(x_data, area_data, color="green",label="motion (bbox area)" , linestyle='-')
     ax.xaxis.set_ticks(np.arange(np.min(x_data), np.max(x_data), 50))
 
     # audio data
@@ -83,25 +81,27 @@ def visualization(area_data, start_list, key_list, end_list, title, beats, group
 
     for beat in beats:
         if beat in group_list:  # group boundaries
-            plt.axvline(x=beat, color='b', linestyle='--')
+            plt.axvline(x=beat, color='lightcoral', label = "group boundary",linestyle='--')
         else:
-            plt.axvline(x=beat, color='y', linestyle='--')
+            plt.axvline(x=beat, color='mistyrose', label = "music beat", linestyle='--')
 
     # effect data
     vis_y = [area_data[i] for i in start_list]
-    ax.scatter(start_list, vis_y, color = "black", label = "start effect",s = 25)
+    ax.scatter(start_list, vis_y, color = "orange", label = "effect start frame",marker = ">", s = 50)
 
     vis_y = [area_data[i] for i in key_list]
-    ax.scatter(key_list, vis_y, color = "blue", label = "key effect", s = 25)
+    ax.scatter(key_list, vis_y, color = "red", label = "effect key frame", marker = "X", s = 75)
 
     # add scale info next to the key point
     for i, scale in enumerate(zoom_scale_list):
         ax.annotate(round(scale,2), (key_list[i], vis_y[i]))
 
     vis_y = [area_data[i] for i in end_list]
-    ax.scatter(end_list, vis_y, color = "black", label = "end_effect", s = 25)
+    ax.scatter(end_list, vis_y, color = "orange", label = "effect end frame",marker = "<", s = 50)
 
-    ax.legend( loc="upper left", bbox_to_anchor=(1.05, 1.0))
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), loc="upper left", bbox_to_anchor=(1.05, 1.0))
     plt.tight_layout()
     if not os.path.exists("vis_result") :
         os.mkdir("vis_result")
