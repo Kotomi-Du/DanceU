@@ -2,7 +2,7 @@ import os
 import argparse
 
 from audio import Audio
-from visualization import draw_shapes_to_special_images, visualization
+from visualization import draw_shapes_to_special_images, draw_decision_statistics
 from motion import Motion
 from effect_decision import EffectDecision
 from video_encoding import VideoEncoding
@@ -28,7 +28,7 @@ def main(video_path, output_dir, debug):
     enc.gen_effects(res, video_in_path=video_path, video_out_path=out_path)
 
     if debug is True:
-        visualization(area_data, start_list, key_list, end_list, video_name, beats, group_list, zoom_scale_list)
+        draw_decision_statistics(area_data, start_list, key_list, end_list, video_name, beats, group_list, zoom_scale_list)
         infer_debug_folder = os.path.join('detection_result', video_name)  # ToDo: use Infer.debug_folder
         draw_shapes_to_special_images(infer_debug_folder, start_list, key_list, end_list, beats)
 

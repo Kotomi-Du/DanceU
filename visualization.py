@@ -93,7 +93,7 @@ def draw_shapes_to_special_images(img_folder, start_list, key_list, end_list, be
     draw_traingle(img_folder, end_list, pos_right_top4, "end", orange, radius)
 
 
-def visualization(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
+def draw_decision_statistics(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
     import matplotlib.pyplot as plt
     import numpy as np
     x_data = range(len(area_data))
