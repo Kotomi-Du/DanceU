@@ -2,7 +2,19 @@ import openshot
 import ffmpeg
 
 class VideoEncoding:
-    def __init__(self, debug=False):
+    def __init__(self, line_type='linear', debug=False):
+        # Bezier curves are quadratic curves, which create a smooth curve.
+        # Linear curves are angular, straight lines between two points.
+        # Constant curves jump from their previous position to a new one (with no interpolation).
+        if line_type == 'linear':
+            self.line_type = openshot.LINEAR
+        elif line_type == 'bezier':
+            self.line_type = openshot.BEZIER
+        elif line_type == 'const':
+            self.line_type = openshot.CONSTANT
+        else:
+            self.line_type = openshot.LINEAR
+            
         self.debug = debug
         self.property_change_curves = {'frame': [],
                                        'scale': [],
@@ -44,15 +56,14 @@ class VideoEncoding:
         """
         for effect in effect_desc_list:
             if effect['type'] == 'zoom':
-                line_type = openshot.BEZIER  # openshot.LINEAR
-                video.scale_x.AddPoint(effect['frame'][0], effect['scale_x'][0], line_type)
-                video.scale_x.AddPoint(effect['frame'][1], effect['scale_x'][1], line_type)
-                video.scale_y.AddPoint(effect['frame'][0], effect['scale_y'][0], line_type)
-                video.scale_y.AddPoint(effect['frame'][1], effect['scale_y'][1], line_type)
-                video.location_x.AddPoint(effect['frame'][0], effect['location_x'][0], line_type)
-                video.location_x.AddPoint(effect['frame'][1], effect['location_x'][1], line_type)
-                video.location_y.AddPoint(effect['frame'][0], effect['location_y'][0], line_type)
-                video.location_y.AddPoint(effect['frame'][1], effect['location_y'][1], line_type)
+                video.scale_x.AddPoint(effect['frame'][0], effect['scale_x'][0], self.line_type)
+                video.scale_x.AddPoint(effect['frame'][1], effect['scale_x'][1], self.line_type)
+                video.scale_y.AddPoint(effect['frame'][0], effect['scale_y'][0], self.line_type)
+                video.scale_y.AddPoint(effect['frame'][1], effect['scale_y'][1], self.line_type)
+                video.location_x.AddPoint(effect['frame'][0], effect['location_x'][0], self.line_type)
+                video.location_x.AddPoint(effect['frame'][1], effect['location_x'][1], self.line_type)
+                video.location_y.AddPoint(effect['frame'][0], effect['location_y'][0], self.line_type)
+                video.location_y.AddPoint(effect['frame'][1], effect['location_y'][1], self.line_type)
             else:
                 print('Only zoom effect is supported for now!')
 
@@ -70,11 +81,10 @@ class VideoEncoding:
 
         point_num = len(effect_desc_dict['frame'])
         for i in range(point_num):
-            line_type = openshot.BEZIER  # openshot.LINEAR
-            video.scale_x.AddPoint(effect_desc_dict['frame'][i], effect_desc_dict['scale_x'][i], line_type)
-            video.scale_y.AddPoint(effect_desc_dict['frame'][i], effect_desc_dict['scale_y'][i], line_type)
-            video.location_x.AddPoint(effect_desc_dict['frame'][i], effect_desc_dict['location_x'][i], line_type)
-            video.location_y.AddPoint(effect_desc_dict['frame'][i], effect_desc_dict['location_y'][i], line_type)
+            video.scale_x.AddPoint(effect_desc_dict['frame'][i], effect_desc_dict['scale_x'][i], self.line_type)
+            video.scale_y.AddPoint(effect_desc_dict['frame'][i], effect_desc_dict['scale_y'][i], self.line_type)
+            video.location_x.AddPoint(effect_desc_dict['frame'][i], effect_desc_dict['location_x'][i], self.line_type)
+            video.location_y.AddPoint(effect_desc_dict['frame'][i], effect_desc_dict['location_y'][i], self.line_type)
 
 
     def add_effect_point(self, video, effec_point_list):
@@ -89,11 +99,10 @@ class VideoEncoding:
         """
         
         for point in effec_point_list:
-            line_type = openshot.LINEAR
-            video.scale_x.AddPoint(point['frame'], point['scale_x'], line_type)
-            video.scale_y.AddPoint(point['frame'], point['scale_y'], line_type)
-            video.location_x.AddPoint(point['frame'], point['location_x'], line_type)
-            video.location_y.AddPoint(point['frame'], point['location_y'], line_type)
+            video.scale_x.AddPoint(point['frame'], point['scale_x'], self.line_type)
+            video.scale_y.AddPoint(point['frame'], point['scale_y'], self.line_type)
+            video.location_x.AddPoint(point['frame'], point['location_x'], self.line_type)
+            video.location_y.AddPoint(point['frame'], point['location_y'], self.line_type)
 
     def make_effect_point_list_from_desc_new(self, effect_desc_list, default_scale=1.2, scale_delta=0.1, frame_delta=5):
         effect_point_list = []
@@ -152,21 +161,20 @@ class VideoEncoding:
 
 
     def add_fancy_effects(self, video, fancy_effect_list):
-        line_type = openshot.LINEAR
         for effect in fancy_effect_list:
             if effect['effect'] == 'screen_pump':
                 key_frame = effect['frame']
                 start_frame = key_frame - effect['offset']
-                end_frame = key_frame - effect['offset']
+                end_frame = key_frame + effect['offset']
                 key_scale = video.scale_x.GetValue(key_frame) * effect['scale']
                 start_scale = video.scale_x.GetValue(start_frame)
                 end_scale = video.scale_x.GetValue(end_frame)
-                video.scale_x.AddPoint(key_frame, key_scale, line_type)
-                video.scale_y.AddPoint(key_frame, key_scale, line_type)
-                video.scale_x.AddPoint(start_frame, start_scale, line_type)
-                video.scale_y.AddPoint(start_frame, start_scale, line_type)
-                video.scale_x.AddPoint(end_frame, end_scale, line_type)
-                video.scale_y.AddPoint(end_frame, end_scale, line_type)
+                video.scale_x.AddPoint(key_frame, key_scale, self.line_type)
+                video.scale_y.AddPoint(key_frame, key_scale, self.line_type)
+                video.scale_x.AddPoint(start_frame, start_scale, self.line_type)
+                video.scale_y.AddPoint(start_frame, start_scale, self.line_type)
+                video.scale_x.AddPoint(end_frame, end_scale, self.line_type)
+                video.scale_y.AddPoint(end_frame, end_scale, self.line_type)
 
 
     def edit_video(self,

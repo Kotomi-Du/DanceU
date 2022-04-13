@@ -24,7 +24,7 @@ def main(video_path, output_dir, debug):
     # generate edited video
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     out_path = os.path.join(output_dir, '{}_out.mp4'.format(video_name))
-    enc = VideoEncoding(debug=debug)
+    enc = VideoEncoding(line_type='linear', debug=debug)
     enc.gen_effects(res, video_in_path=video_path, video_out_path=out_path)
 
     if debug is True:
