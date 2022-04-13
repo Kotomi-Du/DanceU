@@ -10,13 +10,15 @@ class VideoEncoding:
                 video_out_path="./spring_out.mp4", 
                 frame_delta=10, 
                 save_from=0, 
-                save_to=None):
+                save_to=None,
+                fancy_effect_list=None):
         effect_point_list = self.make_effect_point_list_from_desc_new(effect_desc_list_new, frame_delta=frame_delta)
         self.edit_video(video_in_path=video_in_path, 
                     video_out_path=video_out_path, 
                     effect_point_list=effect_point_list,
                     save_from=save_from,
-                    save_to=save_to)
+                    save_to=save_to,
+                    fancy_effect_list=fancy_effect_list)
 
     def get_bitrate(self, file):
         probe = ffmpeg.probe(file)
@@ -144,7 +146,33 @@ class VideoEncoding:
         return effect_point_list
 
 
-    def edit_video(self, video_in_path, video_out_path, effect_desc_list=None, effect_desc_dict=None, effect_point_list=None, save_from=None, save_to=None):
+    def add_fancy_effects(self, video, fancy_effect_list):
+        line_type = openshot.LINEAR
+        for effect in fancy_effect_list:
+            if effect['effect'] == 'screen_pump':
+                key_frame = effect['frame']
+                start_frame = key_frame - effect['offset']
+                end_frame = key_frame - effect['offset']
+                key_scale = video.scale_x.GetValue(key_frame) * effect['scale']
+                start_scale = video.scale_x.GetValue(start_frame)
+                end_scale = video.scale_x.GetValue(end_frame)
+                video.scale_x.AddPoint(key_frame, key_scale, line_type)
+                video.scale_y.AddPoint(key_frame, key_scale, line_type)
+                video.scale_x.AddPoint(start_frame, start_scale, line_type)
+                video.scale_y.AddPoint(start_frame, start_scale, line_type)
+                video.scale_x.AddPoint(end_frame, end_scale, line_type)
+                video.scale_y.AddPoint(end_frame, end_scale, line_type)
+
+
+    def edit_video(self,
+                   video_in_path,
+                   video_out_path,
+                   effect_desc_list=None,
+                   effect_desc_dict=None,
+                   effect_point_list=None,
+                   save_from=None,
+                   save_to=None,
+                   fancy_effect_list=None):
         # Create an FFmpegReader
         r = openshot.FFmpegReader(video_in_path)
 
@@ -188,6 +216,9 @@ class VideoEncoding:
 
         if effect_point_list is not None:
             self.add_effect_point(clip, effect_point_list)
+
+        if fancy_effect_list is not None:
+            self.add_fancy_effects(clip, fancy_effect_list)
 
         # Open the Writer
         w.Open()
