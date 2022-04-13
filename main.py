@@ -2,7 +2,7 @@ import os
 import argparse
 
 from audio import Audio
-from visualization import draw_shapes_to_special_images, draw_decision_statistics, draw_audio_feature
+from visualization import draw_shapes_to_special_images, draw_decision_statistics, draw_audio_feature, draw_video_property_curve
 from motion import Motion
 from effect_decision import EffectDecision
 from video_encoding import VideoEncoding
@@ -24,11 +24,12 @@ def main(video_path, output_dir, debug):
     # generate edited video
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     out_path = os.path.join(output_dir, '{}_out.mp4'.format(video_name))
-    enc = VideoEncoding()
+    enc = VideoEncoding(debug=debug)
     enc.gen_effects(res, video_in_path=video_path, video_out_path=out_path)
 
     if debug is True:
         draw_audio_feature(ado.onset_length, ado.tempo, beats, group_list, video_name)
+        draw_video_property_curve(enc.property_change_curves, prop_type='scale', title=video_name)
         draw_decision_statistics(area_data, start_list, key_list, end_list, video_name, beats, group_list, zoom_scale_list)
         infer_debug_folder = os.path.join('detection_result', video_name)  # ToDo: use Infer.debug_folder
         draw_shapes_to_special_images(infer_debug_folder, start_list, key_list, end_list, beats)

@@ -2,7 +2,12 @@ import openshot
 import ffmpeg
 
 class VideoEncoding:
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.debug = debug
+        self.property_change_curves = {'frame': [],
+                                       'scale': [],
+                                       'loc_x': [],
+                                       'loc_y': []}
         pass
 
     def gen_effects(self, effect_desc_list_new, 
@@ -229,6 +234,9 @@ class VideoEncoding:
             from_idx=save_from
             to_idx=save_to
 
+        if self.debug is True:
+            self.get_property_change_curves(clip, from_idx, to_idx)
+
         # Grab frames from Clip and encode to Writer
         for frame in range(from_idx, to_idx):
             # f = r.GetFrame(frame)
@@ -241,3 +249,16 @@ class VideoEncoding:
         r.Close()
 
         print("Completed successfully!")
+
+
+    def get_property_change_curves(self, video, start, end):
+        self.property_change_curves['frame'] = []
+        self.property_change_curves['scale'] = []
+        self.property_change_curves['loc_x'] = []
+        self.property_change_curves['loc_y'] = []
+        for idx in range(start, end):
+            self.property_change_curves['frame'].append(idx)
+            self.property_change_curves['scale'].append(video.scale_x.GetValue(idx))
+            self.property_change_curves['loc_x'].append(video.location_x.GetValue(idx))
+            self.property_change_curves['loc_y'].append(video.location_y.GetValue(idx))
+
