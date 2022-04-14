@@ -250,6 +250,7 @@ class VideoEncoding:
             # self.add_fancy_effects(clip, fancy_effect_list)
             for effect in fancy_effect_list:
                 if effect['effect'] == 'screen_pump':
+                    # screen_pump_effect = {'effect': 'screen_pump', 'frame': 92, 'scale': 1.3, 'offset': 2}
                     key_frame = effect['frame']
                     start_frame = key_frame - effect['offset']
                     end_frame = key_frame + effect['offset']
@@ -264,6 +265,7 @@ class VideoEncoding:
                     clip.scale_y.AddPoint(end_frame, end_scale, self.line_type)
 
                 if effect['effect'] == 'strobe':
+                    # strobe_effect = {'effect': 'strobe', 'start_from': 168, 'end_to': 176, 'interval': 1}
                     brightness_curve = openshot.Keyframe()
                     brightness_value = 0.0
                     for idx in range(effect['start_from'], effect['end_to'], effect['interval']):
@@ -278,14 +280,59 @@ class VideoEncoding:
                     brightness_effect = openshot.Brightness(brightness_curve, contrast_curve)
                     clip.AddEffect(brightness_effect)
 
+                if effect['effect'] == 'earthquake':
+                    # earthquake_effect = {'effect': 'earthquake', 'direction': 'x', 'frame': 416, 'dist': 0.05, 'offset': 2}
+
+                    shift_dist = effect['dist']
+                    key_frame = effect['frame']
+                    start_frame = effect['frame'] - effect['offset']
+                    end_frame = effect['frame'] + effect['offset']
+
+                    unchanged_curve = openshot.Keyframe()
+                    unchanged_curve.AddPoint(key_frame, 0.0, openshot.CONSTANT)
+                    blue_shift_curve = openshot.Keyframe()
+                    blue_shift_curve.AddPoint(start_frame, 0.0, self.line_type)
+                    blue_shift_curve.AddPoint(key_frame, -shift_dist, self.line_type)
+                    blue_shift_curve.AddPoint(end_frame, 0.0, self.line_type)
+                    red_shift_curve = openshot.Keyframe()
+                    red_shift_curve.AddPoint(start_frame, 0.0, self.line_type)
+                    red_shift_curve.AddPoint(key_frame, shift_dist, self.line_type)
+                    red_shift_curve.AddPoint(end_frame, 0.0, self.line_type)
+
+                    earthquake_effect = None
+                    if effect['direction'] == 'x':
+                        earthquake_effect = openshot.ColorShift(red_shift_curve,  # red_x
+                                                                unchanged_curve,  # red_y
+                                                                unchanged_curve,  # green_x
+                                                                unchanged_curve,  # green_y
+                                                                blue_shift_curve, # blue_x
+                                                                unchanged_curve,  # blue_y
+                                                                unchanged_curve,  # alpha_x
+                                                                unchanged_curve   # alpha_y
+                                                                )
+                    elif effect['direction'] == 'y':
+                        earthquake_effect = openshot.ColorShift(unchanged_curve,  # red_x
+                                                                red_shift_curve,  # red_y
+                                                                unchanged_curve,  # green_x
+                                                                unchanged_curve,  # green_y
+                                                                unchanged_curve,  # blue_x
+                                                                blue_shift_curve, # blue_y
+                                                                unchanged_curve,  # alpha_x
+                                                                unchanged_curve   # alpha_y
+                                                                )
+                    if earthquake_effect is not None:
+                        clip.AddEffect(earthquake_effect)
+
         # Open the Writer
         w.Open()
 
         from_idx=0
         to_idx=r.info.video_length
-        if save_from is not None and save_to is not None:
-            from_idx=save_from
-            to_idx=save_to
+        if save_from is not None and save_to is not None and save_from < save_to:
+            if save_from > 0 and save_from < to_idx:
+                from_idx=save_from
+            if save_to > 0 and save_to < to_idx:
+                to_idx=save_to
 
         if self.debug is True:
             self.get_property_change_curves(clip, from_idx, to_idx)
