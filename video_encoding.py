@@ -19,7 +19,8 @@ class VideoEncoding:
         self.property_change_curves = {'frame': [],
                                        'scale': [],
                                        'loc_x': [],
-                                       'loc_y': []}
+                                       'loc_y': [],
+                                       'alpha': []}
         pass
 
     def gen_effects(self, effect_desc_list_new, 
@@ -175,6 +176,21 @@ class VideoEncoding:
                 video.scale_y.AddPoint(start_frame, start_scale, self.line_type)
                 video.scale_x.AddPoint(end_frame, end_scale, self.line_type)
                 video.scale_y.AddPoint(end_frame, end_scale, self.line_type)
+            if effect['effect'] == 'strobe':
+                pass  #TODO: fix the issue of "fail to call video.GetFrame() outside this func"
+                # brightness_curve = openshot.Keyframe()
+                # brightness_value = 0.0
+                # for idx in range(effect['start_from'], effect['end_to'], effect['interval']):
+                #     brightness_curve.AddPoint(idx, brightness_value, openshot.CONSTANT)
+                #     brightness_value = -1.0 - brightness_value
+                # brightness_curve.AddPoint(effect['end_to'], 0.0, openshot.CONSTANT)
+                #
+                # contrast_curve = openshot.Keyframe()
+                # contrast_curve.AddPoint(1, 0.0, openshot.CONSTANT)
+                # contrast_curve.AddPoint(effect['end_to'], 0.0, openshot.CONSTANT)
+                #
+                # brightness_effect = openshot.Brightness(brightness_curve, contrast_curve)
+                # video.AddEffect(brightness_effect)
 
 
     def edit_video(self,
@@ -231,7 +247,36 @@ class VideoEncoding:
             self.add_effect_point(clip, effect_point_list)
 
         if fancy_effect_list is not None:
-            self.add_fancy_effects(clip, fancy_effect_list)
+            # self.add_fancy_effects(clip, fancy_effect_list)
+            for effect in fancy_effect_list:
+                if effect['effect'] == 'screen_pump':
+                    key_frame = effect['frame']
+                    start_frame = key_frame - effect['offset']
+                    end_frame = key_frame + effect['offset']
+                    key_scale = clip.scale_x.GetValue(key_frame) * effect['scale']
+                    start_scale = clip.scale_x.GetValue(start_frame)
+                    end_scale = clip.scale_x.GetValue(end_frame)
+                    clip.scale_x.AddPoint(key_frame, key_scale, self.line_type)
+                    clip.scale_y.AddPoint(key_frame, key_scale, self.line_type)
+                    clip.scale_x.AddPoint(start_frame, start_scale, self.line_type)
+                    clip.scale_y.AddPoint(start_frame, start_scale, self.line_type)
+                    clip.scale_x.AddPoint(end_frame, end_scale, self.line_type)
+                    clip.scale_y.AddPoint(end_frame, end_scale, self.line_type)
+
+                if effect['effect'] == 'strobe':
+                    brightness_curve = openshot.Keyframe()
+                    brightness_value = 0.0
+                    for idx in range(effect['start_from'], effect['end_to'], effect['interval']):
+                        brightness_curve.AddPoint(idx, brightness_value, openshot.CONSTANT)
+                        brightness_value = -1.0 - brightness_value
+                    brightness_curve.AddPoint(effect['end_to'], 0.0, openshot.CONSTANT)
+
+                    contrast_curve = openshot.Keyframe()
+                    contrast_curve.AddPoint(1, 0.0, openshot.CONSTANT)
+                    contrast_curve.AddPoint(effect['end_to'], 0.0, openshot.CONSTANT)
+
+                    brightness_effect = openshot.Brightness(brightness_curve, contrast_curve)
+                    clip.AddEffect(brightness_effect)
 
         # Open the Writer
         w.Open()
@@ -264,9 +309,11 @@ class VideoEncoding:
         self.property_change_curves['scale'] = []
         self.property_change_curves['loc_x'] = []
         self.property_change_curves['loc_y'] = []
+        self.property_change_curves['alpha'] = []
         for idx in range(start, end):
             self.property_change_curves['frame'].append(idx)
             self.property_change_curves['scale'].append(video.scale_x.GetValue(idx))
             self.property_change_curves['loc_x'].append(video.location_x.GetValue(idx))
             self.property_change_curves['loc_y'].append(video.location_y.GetValue(idx))
+            self.property_change_curves['alpha'].append(video.alpha.GetValue(idx))
 
