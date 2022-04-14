@@ -2,7 +2,7 @@ import os
 import argparse
 
 from audio import Audio
-from visualization import draw_shapes_to_special_images, draw_decision_statistics
+from visualization import draw_shapes_to_special_images, draw_decision_statistics, draw_audio_feature
 from motion import Motion
 from effect_decision import EffectDecision
 from video_encoding import VideoEncoding
@@ -19,7 +19,7 @@ def main(video_path, output_dir, debug):
 
     # get effects based on music and motion
     eff = EffectDecision(debug=debug)
-    res, start_list, key_list, end_list, zoom_scale_list, group_list = eff.get_effect_list(area_data, beats, ado, framerate, group_size=4)
+    res, start_list, key_list, end_list, zoom_scale_list, group_list = eff.get_effect_list(area_data, beats, ado, framerate, group_size=2)
 
     # generate edited video
     video_name = os.path.splitext(os.path.basename(video_path))[0]
@@ -28,6 +28,7 @@ def main(video_path, output_dir, debug):
     enc.gen_effects(res, video_in_path=video_path, video_out_path=out_path)
 
     if debug is True:
+        draw_audio_feature(ado.onset_length, ado.tempo, beats, group_list, video_name)
         draw_decision_statistics(area_data, start_list, key_list, end_list, video_name, beats, group_list, zoom_scale_list)
         infer_debug_folder = os.path.join('detection_result', video_name)  # ToDo: use Infer.debug_folder
         draw_shapes_to_special_images(infer_debug_folder, start_list, key_list, end_list, beats)

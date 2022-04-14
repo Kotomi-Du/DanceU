@@ -7,6 +7,7 @@ from librosa import onset, beat
 class Audio:
     def __init__(self, video_path) -> None:
         self.video_info = ffmpeg.probe(video_path)
+        self.framenum = eval(self.video_info['streams'][0]['nb_frames'])
         self.framerate = eval(self.video_info['streams'][0]['r_frame_rate'])
         self.y, self.sr = librosa.load(video_path)
 
@@ -16,7 +17,7 @@ class Audio:
         self.__analyze_audio()
         self.beats = []
         for k, v in self.audio_beats.items():
-          self.beats.append(k)
+            self.beats.append(k)
         
 
     def is_audio_beat(self, motion_beat_frame, slack_range=8) -> bool:
@@ -36,7 +37,8 @@ class Audio:
         '''
         assert isinstance(motion_beat_frame, int), 'Input parameter must be integer'
         for i in range(motion_beat_frame-(slack_range//2), motion_beat_frame+(slack_range//2), 1):
-            if i in self.audio_beats: return True
+            if i in self.audio_beats: 
+                return True
         return False
 
 
@@ -101,6 +103,17 @@ class Audio:
         for idx, frame in enumerate(beats_frame):
             timest = beats_timeseq[idx]
             self.audio_beats[frame] = {'timestamp':timest, 'speed':speed}
+
+        onsetenv_timeseq = times[range(0,len(onset_env))]
+        onsetenv_frame = self.__times_to_frameidx(onsetenv_timeseq)
+        self.onset_length = np.zeros(self.framenum)
+        num = np.zeros(self.framenum)
+        for i, frame_id in enumerate(onsetenv_frame):
+            if frame_id < self.framenum:
+                self.onset_length[frame_id] = max(onset_env[i], self.onset_length[frame_id])
+                num[frame_id] +=1
+        #BPM: beat per minute
+        self.tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=self.sr)[0]
   
 
 if __name__ == '__main__':

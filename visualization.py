@@ -93,6 +93,37 @@ def draw_shapes_to_special_images(img_folder, start_list, key_list, end_list, be
     draw_traingle(img_folder, end_list, pos_right_top4, "end", orange, radius)
 
 
+def draw_audio_feature(audio_onsets, audio_bpm, beats, group_list, title):
+    import matplotlib.pyplot as plt
+    x_data = range(len(audio_onsets))
+    figure = plt.figure(figsize=(len(audio_onsets)/35,5))
+    ax = figure.add_subplot()
+
+    #onset_length
+    ax.plot(x_data, audio_onsets, color="tab:blue",label="onset" , linestyle='-')
+
+    #beat per minute
+    textstr =  "BPM = {:.2f}".format(audio_bpm)
+    props = dict(boxstyle='round', facecolor='lightcoral', alpha=0.5)
+    ax.text(1.05, 0.05, textstr, transform=ax.transAxes, fontsize=12,
+        verticalalignment='top', bbox=props)
+
+    #beat
+    for beat in beats:
+        if beat in group_list:  # group boundaries
+            plt.axvline(x=beat, color='lightcoral', label = "group boundary",linestyle='--')
+        else:
+            plt.axvline(x=beat, color='mistyrose', label = "music beat", linestyle='--')
+
+    #legend
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), loc="upper left", bbox_to_anchor=(1.05, 1.0))
+    plt.tight_layout()
+    if not os.path.exists("vis_result") :
+        os.mkdir("vis_result")
+    figure.savefig("vis_result/{}_audio.png".format(title))
+
 def draw_decision_statistics(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
     import matplotlib.pyplot as plt
     import numpy as np
