@@ -323,6 +323,16 @@ class VideoEncoding:
                     if earthquake_effect is not None:
                         clip.AddEffect(earthquake_effect)
 
+                if effect['effect'] == 'nightclub':
+                    # nightclub_effect = {'effect': 'nightclub', 'start_from': 247, 'end_to': 322}
+                    hue_curve = openshot.Keyframe()
+                    middle_frame = int((effect['start_from'] + effect['end_to']) / 2)
+                    hue_curve.AddPoint(effect['start_from'], 0.0, self.line_type)
+                    hue_curve.AddPoint(middle_frame, 1.0, self.line_type)
+                    hue_curve.AddPoint(effect['end_to'], 0.0, self.line_type)
+                    hue_effect = openshot.Hue(hue_curve)
+                    clip.AddEffect(hue_effect)
+
         # Open the Writer
         w.Open()
 
