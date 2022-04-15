@@ -26,7 +26,6 @@ def build_argparser():
     parser = ArgumentParser(add_help=False)
     args = parser.add_argument_group('Options')
     args.add_argument('--video-path', type=str, default='resources_video/spring_origin.mp4', help='video path')
-    parser.add_argument('--video-dir', type=str, default=SUPPRESS, help='video directory path')
     args.add_argument('--output-dir', type=str, default='output', help='output dir')
     parser.add_argument('--debug', help="Optional. Don't show output.", action='store_true')
     args.add_argument('-h', '--help', action='help', default=SUPPRESS, help='Show this help message and exit.')
