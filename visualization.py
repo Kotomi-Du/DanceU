@@ -3,6 +3,15 @@ import os
 import numpy as np
 
 
+framenum_uplimit = 800
+def sample(data,framenum_uplimit) :
+    new_data = []
+    for v in data:
+        if v < framenum_uplimit:
+            new_data.append(v)
+    return new_data
+
+
 class Point:
     def __init__ (self, x, y):
         self.x = x
@@ -95,6 +104,11 @@ def draw_shapes_to_special_images(img_folder, start_list, key_list, end_list, be
 
 def draw_audio_feature(audio_onsets, audio_bpm, beats, group_list, title):
     import matplotlib.pyplot as plt
+    if framenum_uplimit != -1:
+        audio_onsets = audio_onsets[:framenum_uplimit]
+        beats = sample(beats,framenum_uplimit)
+        group_list = sample(group_list,framenum_uplimit)
+
     x_data = range(len(audio_onsets))
     figure = plt.figure(figsize=(len(audio_onsets)/35,5))
     ax = figure.add_subplot()
@@ -127,6 +141,15 @@ def draw_audio_feature(audio_onsets, audio_bpm, beats, group_list, title):
 def draw_decision_statistics(area_data, start_list, key_list, end_list, title, beats, group_list, zoom_scale_list):
     import matplotlib.pyplot as plt
     import numpy as np
+    if framenum_uplimit != -1:
+        area_data = area_data[:framenum_uplimit]
+        start_list= sample(start_list,framenum_uplimit)
+        key_list = sample(key_list,framenum_uplimit)
+        end_list = sample(end_list,framenum_uplimit)
+        beats = sample(beats,framenum_uplimit)
+        group_list = sample(group_list,framenum_uplimit)
+        zoom_scale_list = zoom_scale_list[:len(key_list)]
+
     x_data = range(len(area_data))
     # create figure and axis objects with subplots()
     figure = plt.figure(figsize=(len(area_data)/35,5))
