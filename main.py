@@ -35,17 +35,21 @@ def main(video_path, output_dir, debug):
 
 
 if __name__ == '__main__':
-    # ToDo: Use arg parser
     parser = argparse.ArgumentParser()
     parser.add_argument('--video-path', type=str, default='resources_video/spring_origin.mp4', help='video path')
     parser.add_argument('--output-dir', type=str, default='output', help='output dir')
     parser.add_argument('--debug', help="Optional. Don't show output.", action='store_true')
     args = parser.parse_args()
 
-    if not os.path.exists(args.video_path):
-        print('{} does not exit!'.format(args.video_path))
-
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
 
-    main(args.video_path, args.output_dir, args.debug)
+    if not os.path.exists(args.video_path):
+        print('{} does not exist!'.format(args.video_dir))
+    else:
+        if os.path.isdir(args.video_path):
+            for filename in os.listdir(args.video_path):
+                video_path = os.path.join(args.video_path, filename)
+                main(video_path, args.output_dir, args.debug)
+        else:
+            main(args.video_path, args.output_dir, args.debug)
