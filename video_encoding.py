@@ -160,39 +160,6 @@ class VideoEncoding:
 
         return effect_point_list
 
-
-    def add_fancy_effects(self, video, fancy_effect_list):
-        for effect in fancy_effect_list:
-            if effect['effect'] == 'screen_pump':
-                key_frame = effect['frame']
-                start_frame = key_frame - effect['offset']
-                end_frame = key_frame + effect['offset']
-                key_scale = video.scale_x.GetValue(key_frame) * effect['scale']
-                start_scale = video.scale_x.GetValue(start_frame)
-                end_scale = video.scale_x.GetValue(end_frame)
-                video.scale_x.AddPoint(key_frame, key_scale, self.line_type)
-                video.scale_y.AddPoint(key_frame, key_scale, self.line_type)
-                video.scale_x.AddPoint(start_frame, start_scale, self.line_type)
-                video.scale_y.AddPoint(start_frame, start_scale, self.line_type)
-                video.scale_x.AddPoint(end_frame, end_scale, self.line_type)
-                video.scale_y.AddPoint(end_frame, end_scale, self.line_type)
-            if effect['effect'] == 'strobe':
-                pass  #TODO: fix the issue of "fail to call video.GetFrame() outside this func"
-                # brightness_curve = openshot.Keyframe()
-                # brightness_value = 0.0
-                # for idx in range(effect['start_from'], effect['end_to'], effect['interval']):
-                #     brightness_curve.AddPoint(idx, brightness_value, openshot.CONSTANT)
-                #     brightness_value = -1.0 - brightness_value
-                # brightness_curve.AddPoint(effect['end_to'], 0.0, openshot.CONSTANT)
-                #
-                # contrast_curve = openshot.Keyframe()
-                # contrast_curve.AddPoint(1, 0.0, openshot.CONSTANT)
-                # contrast_curve.AddPoint(effect['end_to'], 0.0, openshot.CONSTANT)
-                #
-                # brightness_effect = openshot.Brightness(brightness_curve, contrast_curve)
-                # video.AddEffect(brightness_effect)
-
-
     def edit_video(self,
                    video_in_path,
                    video_out_path,
@@ -247,91 +214,11 @@ class VideoEncoding:
             self.add_effect_point(clip, effect_point_list)
 
         if fancy_effect_list is not None:
-            # self.add_fancy_effects(clip, fancy_effect_list)
-            for effect in fancy_effect_list:
-                if effect['effect'] == 'screen_pump':
-                    # screen_pump_effect = {'effect': 'screen_pump', 'frame': 92, 'scale': 1.3, 'offset': 2}
-                    key_frame = effect['frame']
-                    start_frame = key_frame - effect['offset']
-                    end_frame = key_frame + effect['offset']
-                    key_scale = clip.scale_x.GetValue(key_frame) * effect['scale']
-                    start_scale = clip.scale_x.GetValue(start_frame)
-                    end_scale = clip.scale_x.GetValue(end_frame)
-                    clip.scale_x.AddPoint(key_frame, key_scale, self.line_type)
-                    clip.scale_y.AddPoint(key_frame, key_scale, self.line_type)
-                    clip.scale_x.AddPoint(start_frame, start_scale, self.line_type)
-                    clip.scale_y.AddPoint(start_frame, start_scale, self.line_type)
-                    clip.scale_x.AddPoint(end_frame, end_scale, self.line_type)
-                    clip.scale_y.AddPoint(end_frame, end_scale, self.line_type)
-
-                if effect['effect'] == 'strobe':
-                    # strobe_effect = {'effect': 'strobe', 'start_from': 168, 'end_to': 176, 'interval': 1}
-                    brightness_curve = openshot.Keyframe()
-                    brightness_value = 0.0
-                    for idx in range(effect['start_from'], effect['end_to'], effect['interval']):
-                        brightness_curve.AddPoint(idx, brightness_value, openshot.CONSTANT)
-                        brightness_value = -1.0 - brightness_value
-                    brightness_curve.AddPoint(effect['end_to'], 0.0, openshot.CONSTANT)
-
-                    contrast_curve = openshot.Keyframe()
-                    contrast_curve.AddPoint(1, 0.0, openshot.CONSTANT)
-                    contrast_curve.AddPoint(effect['end_to'], 0.0, openshot.CONSTANT)
-
-                    brightness_effect = openshot.Brightness(brightness_curve, contrast_curve)
-                    clip.AddEffect(brightness_effect)
-
-                if effect['effect'] == 'earthquake':
-                    # earthquake_effect = {'effect': 'earthquake', 'direction': 'x', 'frame': 416, 'dist': 0.05, 'offset': 2}
-
-                    shift_dist = effect['dist']
-                    key_frame = effect['frame']
-                    start_frame = effect['frame'] - effect['offset']
-                    end_frame = effect['frame'] + effect['offset']
-
-                    unchanged_curve = openshot.Keyframe()
-                    unchanged_curve.AddPoint(key_frame, 0.0, openshot.CONSTANT)
-                    blue_shift_curve = openshot.Keyframe()
-                    blue_shift_curve.AddPoint(start_frame, 0.0, self.line_type)
-                    blue_shift_curve.AddPoint(key_frame, -shift_dist, self.line_type)
-                    blue_shift_curve.AddPoint(end_frame, 0.0, self.line_type)
-                    red_shift_curve = openshot.Keyframe()
-                    red_shift_curve.AddPoint(start_frame, 0.0, self.line_type)
-                    red_shift_curve.AddPoint(key_frame, shift_dist, self.line_type)
-                    red_shift_curve.AddPoint(end_frame, 0.0, self.line_type)
-
-                    earthquake_effect = None
-                    if effect['direction'] == 'x':
-                        earthquake_effect = openshot.ColorShift(red_shift_curve,  # red_x
-                                                                unchanged_curve,  # red_y
-                                                                unchanged_curve,  # green_x
-                                                                unchanged_curve,  # green_y
-                                                                blue_shift_curve, # blue_x
-                                                                unchanged_curve,  # blue_y
-                                                                unchanged_curve,  # alpha_x
-                                                                unchanged_curve   # alpha_y
-                                                                )
-                    elif effect['direction'] == 'y':
-                        earthquake_effect = openshot.ColorShift(unchanged_curve,  # red_x
-                                                                red_shift_curve,  # red_y
-                                                                unchanged_curve,  # green_x
-                                                                unchanged_curve,  # green_y
-                                                                unchanged_curve,  # blue_x
-                                                                blue_shift_curve, # blue_y
-                                                                unchanged_curve,  # alpha_x
-                                                                unchanged_curve   # alpha_y
-                                                                )
-                    if earthquake_effect is not None:
-                        clip.AddEffect(earthquake_effect)
-
-                if effect['effect'] == 'nightclub':
-                    # nightclub_effect = {'effect': 'nightclub', 'start_from': 247, 'end_to': 322}
-                    hue_curve = openshot.Keyframe()
-                    middle_frame = int((effect['start_from'] + effect['end_to']) / 2)
-                    hue_curve.AddPoint(effect['start_from'], 0.0, self.line_type)
-                    hue_curve.AddPoint(middle_frame, 1.0, self.line_type)
-                    hue_curve.AddPoint(effect['end_to'], 0.0, self.line_type)
-                    hue_effect = openshot.Hue(hue_curve)
-                    clip.AddEffect(hue_effect)
+            from effect import get_fancy_effects
+            fancy_effects = get_fancy_effects(fancy_effect_list, clip)
+            for effect in fancy_effects:
+                if effect is not None:
+                    clip.AddEffect(effect)
 
         # Open the Writer
         w.Open()
