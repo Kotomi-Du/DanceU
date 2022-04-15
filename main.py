@@ -5,7 +5,7 @@ from audio import Audio
 from visualization import draw_shapes_to_special_images, draw_decision_statistics, draw_audio_feature, draw_video_property_curve
 from motion import Motion
 from effect_decision import EffectDecision
-from video_encoding import VideoEncoding
+from video_generation import VideoGeneration
 
 def main(video_path, output_dir, debug):
     # analyze motion
@@ -24,7 +24,7 @@ def main(video_path, output_dir, debug):
     # generate edited video
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     out_path = os.path.join(output_dir, '{}_out.mp4'.format(video_name))
-    enc = VideoEncoding(line_type='linear', debug=debug)
+    enc = VideoGeneration(line_type='linear', debug=debug)
     enc.gen_effects(res, video_in_path=video_path, video_out_path=out_path)
 
     if debug is True:
