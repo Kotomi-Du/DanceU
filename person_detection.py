@@ -152,12 +152,12 @@ def Infer(input_path, debug=False):
             else:
                 bboxes.append(bboxes[-1])
 
-            next_frame_id_to_show += 1
             if debug is True and infer_debug_folder is not None:
                 # draw frame id to the left top position of an image
                 draw_text(frame, '{}'.format(next_frame_id_to_show), pos=(10, 10))
                 cv2.imwrite("{}/{}.png".format(infer_debug_folder, str(next_frame_id_to_show)), frame)
-
+            next_frame_id_to_show += 1
+            
             if not args.no_show:
                 cv2.imshow('Detection Results', frame)
                 key = cv2.waitKey(1)
