@@ -46,7 +46,7 @@ if __name__ == '__main__':
         os.mkdir(args.output_dir)
 
     if not os.path.exists(args.video_path):
-        print('{} does not exist!'.format(args.video_dir))
+        print('{} does not exist!'.format(args.video_path))
     else:
         if os.path.isdir(args.video_path):
             for filename in os.listdir(args.video_path):
