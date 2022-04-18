@@ -192,6 +192,27 @@ def draw_decision_statistics(area_data, start_list, key_list, end_list, title, b
     figure.savefig("vis_result/{}.png".format(title))
 
 
+def draw_video_property_curve(property_dict, prop_type='scale', title='name'):
+    # prop_type can be 'scale', 'loc_x', 'loc_y'
+    frame_idx_list = property_dict['frame']
+    prop_list = property_dict[prop_type]
+
+    import matplotlib.pyplot as plt
+    figure = plt.figure(figsize=(len(frame_idx_list)/35, 5))
+    ax = figure.add_subplot()
+
+    ax.plot(frame_idx_list, prop_list, color="green",label=prop_type , linestyle='-')
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), loc="upper left", bbox_to_anchor=(1.05, 1.0))
+
+    plt.tight_layout()
+    if not os.path.exists("vis_result") :
+        os.mkdir("vis_result")
+    figure.savefig("vis_result/{}_{}.png".format(title, prop_type))
+
+
 def print_performance():
     #Audio
     #Motion
