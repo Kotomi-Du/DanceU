@@ -28,7 +28,7 @@ def main(video_path, output_dir, debug):
     enc.gen_effects(res, video_in_path=video_path, video_out_path=out_path)
 
     if debug is True:
-        draw_audio_feature(ado.onset_length, ado.tempo, beats, group_list, video_name)
+        draw_audio_feature(ado.onset_length, ado.get_audio_rmse(), ado.tempo, beats,  video_name)
         draw_video_property_curve(enc.property_change_curves, prop_type='scale', title=video_name)
         draw_decision_statistics(area_data, start_list, key_list, end_list, video_name, beats, group_list, zoom_scale_list)
         infer_debug_folder = os.path.join('detection_result', video_name)  # ToDo: use Infer.debug_folder

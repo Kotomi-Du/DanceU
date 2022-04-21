@@ -102,19 +102,25 @@ def draw_shapes_to_special_images(img_folder, start_list, key_list, end_list, be
     draw_traingle(img_folder, end_list, pos_right_top4, "end", orange, radius)
 
 
-def draw_audio_feature(audio_onsets, audio_bpm, beats, group_list, title):
+def draw_audio_feature(audio_onsets, audio_rmse, audio_bpm, beats,  title):
     import matplotlib.pyplot as plt
     if framenum_uplimit != -1:
         audio_onsets = audio_onsets[:framenum_uplimit]
+        audio_rmse = audio_rmse[:framenum_uplimit]
         beats = sample(beats,framenum_uplimit)
-        group_list = sample(group_list,framenum_uplimit)
+     
 
     x_data = range(len(audio_onsets))
-    figure = plt.figure(figsize=(len(audio_onsets)/35,5))
+    figure = plt.figure(figsize=(len(audio_onsets)/15,5))
     ax = figure.add_subplot()
 
     #onset_length
-    ax.plot(x_data, audio_onsets, color="tab:blue",label="onset" , linestyle='-')
+    lns1 = ax.plot(x_data, audio_onsets, color="tab:blue", label="onset" , linestyle='-')
+
+    #rmse
+    ax2=ax.twinx()
+    lns2 = ax2.plot(x_data, audio_rmse, color="tab:green",label="rmse" , linestyle='-')
+   
 
     #beat per minute
     textstr =  "BPM = {:.2f}".format(audio_bpm)
@@ -124,15 +130,16 @@ def draw_audio_feature(audio_onsets, audio_bpm, beats, group_list, title):
 
     #beat
     for beat in beats:
-        if beat in group_list:  # group boundaries
-            plt.axvline(x=beat, color='lightcoral', label = "group boundary",linestyle='--')
-        else:
-            plt.axvline(x=beat, color='mistyrose', label = "music beat", linestyle='--')
+        lns3 = plt.axvline(x=beat, color='lightcoral', label = "music beat", linestyle='--')
 
     #legend
-    handles, labels = plt.gca().get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    ax.legend(by_label.values(), by_label.keys(), loc="upper left", bbox_to_anchor=(1.05, 1.0))
+    # handles, labels = plt.gca().get_legend_handles_labels()
+    # by_label = dict(zip(labels, handles))
+    # ax.legend(by_label.values(), by_label.keys())#, loc="upper left", bbox_to_anchor=(1.05, 1.0))
+    lns = lns1+lns2 +[lns3]
+    labs = [l.get_label() for l in lns]
+    ax.legend(lns, labs,  loc="upper left", bbox_to_anchor=(1.05, 1.0))
+    
     plt.tight_layout()
     if not os.path.exists("vis_result") :
         os.mkdir("vis_result")
