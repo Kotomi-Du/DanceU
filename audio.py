@@ -114,10 +114,34 @@ class Audio:
                 num[frame_id] +=1
         #BPM: beat per minute
         self.tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=self.sr)[0]
-  
+
+    def get_audio_rmse(self):
+      '''
+      ref: https://musicinformationretrieval.com/energy.html
+      '''
+      hop_length = 256
+      frame_length = 512
+      rmse = librosa.feature.rms(self.y, frame_length=frame_length, hop_length=hop_length, center=True)
+      rmse = rmse[0]
+      frames = range(len(rmse))
+      rmse_timeseq = librosa.frames_to_time(frames, sr=self.sr, hop_length=hop_length)
+      rmse_vframeseq = self.__times_to_frameidx(rmse_timeseq)
+      rmse_in_vframe = np.zeros(self.framenum)
+      for i, frame_id in enumerate(rmse_vframeseq):
+            if frame_id < self.framenum:
+                rmse_in_vframe[frame_id] = max(rmse[i], rmse_in_vframe[frame_id])
+      return rmse_in_vframe
 
 if __name__ == '__main__':
-    a = Audio('resources_video/money_reference.mp4')
-    print(a.is_audio_beat(25))
-    print(a.get_effect_advice(38))
+    import librosa.display
+    import matplotlib.pyplot as plt
+
+    figure = plt.figure(figsize=(1817/35,5))
+    a = Audio('resources_video/spring_origin.mp4')
+    ax = figure.add_subplot()
+    #librosa.display.waveshow(a.y, a.sr)  #the amplitude envelope of a waveform
+    # energy = np.array( [ sum(abs(a.y[i:i+frame_length]**2)) for i in range(0, len(a.y), hop_length) ])
+    # energy = energy/ np.linalg.norm(energy) * 10
+    #p = librosa.display.specshow(librosa.amplitude_to_db(out, ref=np.max), ax=ax, y_axis='log', x_axis='time')
+    figure.savefig('vis_result/spring_wave_2.png')
     

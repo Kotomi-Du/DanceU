@@ -6,8 +6,12 @@ from visualization import draw_shapes_to_special_images, draw_decision_statistic
 from motion import Motion
 from effect_decision import EffectDecision
 from video_generation import VideoGeneration
+import warnings
+warnings.filterwarnings('ignore')
 
 def main(video_path, output_dir, debug):
+    video_name = os.path.splitext(os.path.basename(video_path))[0]
+    
     # analyze motion
     m = Motion(video_path=video_path, debug=debug)
     area_data = m.area_data
@@ -22,13 +26,12 @@ def main(video_path, output_dir, debug):
     res, start_list, key_list, end_list, zoom_scale_list, group_list = eff.get_effect_list(area_data, beats, ado, framerate, group_size=2)
 
     # generate edited video
-    video_name = os.path.splitext(os.path.basename(video_path))[0]
     out_path = os.path.join(output_dir, '{}_out.mp4'.format(video_name))
     enc = VideoGeneration(line_type='linear', debug=debug)
     enc.gen_effects(res, video_in_path=video_path, video_out_path=out_path)
 
     if debug is True:
-        draw_audio_feature(ado.onset_length, ado.tempo, beats, group_list, video_name)
+        draw_audio_feature(ado.onset_length, ado.get_audio_rmse(), ado.tempo, beats,  video_name)
         draw_video_property_curve(enc.property_change_curves, prop_type='scale', title=video_name)
         draw_decision_statistics(area_data, start_list, key_list, end_list, video_name, beats, group_list, zoom_scale_list)
         infer_debug_folder = os.path.join('detection_result', video_name)  # ToDo: use Infer.debug_folder
@@ -50,7 +53,9 @@ if __name__ == '__main__':
     else:
         if os.path.isdir(args.video_path):
             for filename in os.listdir(args.video_path):
+                print("LOG: start doing DanceU for video {}".format(filename))
                 video_path = os.path.join(args.video_path, filename)
                 main(video_path, args.output_dir, args.debug)
+                print("LOG: finish!!")
         else:
             main(args.video_path, args.output_dir, args.debug)
