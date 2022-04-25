@@ -2,7 +2,7 @@ import os
 import argparse
 
 from audio import Audio
-from visualization import draw_shapes_to_special_images, draw_decision_statistics, draw_audio_feature, draw_video_property_curve
+from visualization import *
 from motion import Motion
 from effect_decision import EffectDecision
 from video_generation import VideoGeneration
@@ -15,6 +15,8 @@ def main(video_path, output_dir, debug):
     # analyze motion
     m = Motion(video_path=video_path, debug=debug)
     area_data = m.area_data
+    bboxes = m.bboxes
+    infer_frame_size = m.infer_frame_size
 
     # analyze audio
     ado = Audio(video_path)
@@ -28,11 +30,20 @@ def main(video_path, output_dir, debug):
     # generate edited video
     out_path = os.path.join(output_dir, '{}_out.mp4'.format(video_name))
     enc = VideoGeneration(line_type='linear', debug=debug)
-    enc.gen_effects(res, video_in_path=video_path, video_out_path=out_path)
+    enc.gen_effects(res, video_in_path=video_path, video_out_path=out_path,
+                    bbox_info={'bboxes': bboxes, 'frame_size': infer_frame_size},
+                    )
 
     if debug is True:
+<<<<<<< HEAD
         draw_audio_feature(ado.onset_length, ado.get_audio_rmse(), ado.tempo, beats,  video_name)
+=======
+        # draw_bbox_width_height(bboxes, video_name)
+        draw_audio_feature(ado.onset_length, ado.tempo, beats, group_list, video_name)
+>>>>>>> Try best to make dancer in the center of the view by adjusting X and Y locations.
         draw_video_property_curve(enc.property_change_curves, prop_type='scale', title=video_name)
+        draw_video_property_curve(enc.property_change_curves, prop_type='loc_x', title=video_name)
+        draw_video_property_curve(enc.property_change_curves, prop_type='loc_y', title=video_name)
         draw_decision_statistics(area_data, start_list, key_list, end_list, video_name, beats, group_list, zoom_scale_list)
         infer_debug_folder = os.path.join('detection_result', video_name)  # ToDo: use Infer.debug_folder
         draw_shapes_to_special_images(infer_debug_folder, start_list, key_list, end_list, beats)

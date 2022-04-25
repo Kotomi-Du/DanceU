@@ -3,9 +3,10 @@ from person_detection import Infer
 class Motion:
     def __init__(self, video_path, debug):
         self.video_path = video_path
-        bounding_boxes = Infer(video_path, debug=debug)
+        bounding_boxes, self.infer_frame_size = Infer(video_path, debug=debug)
         t_area_data = self.calc_area(bounding_boxes)
         self.area_data = self.preprocess_data(t_area_data)
+        self.bboxes = np.array(bounding_boxes)
 
     def preprocess_data(self, data, kernel_size = 10):
         ##rectify some data 361-366

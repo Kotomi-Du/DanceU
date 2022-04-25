@@ -16,6 +16,10 @@ class VideoGeneration:
         else:
             self.line_type = openshot.LINEAR
 
+        self.effect_point_list = None
+        self.from_idx = None
+        self.to_idx = None
+
         self.debug = debug
         self.property_change_curves = {'frame': [],
                                        'scale': [],
@@ -30,14 +34,16 @@ class VideoGeneration:
                     frame_delta=10,
                     save_from=0,
                     save_to=None,
-                    fancy_effect_list=None):
+                    fancy_effect_list=None,
+                    bbox_info=None):
         effect_point_list = self.make_effect_point_list_from_desc(effect_desc_list_new, frame_delta=frame_delta)
         self.edit_video(video_in_path=video_in_path,
                         video_out_path=video_out_path,
                         effect_point_list=effect_point_list,
                         save_from=save_from,
                         save_to=save_to,
-                        fancy_effect_list=fancy_effect_list)
+                        fancy_effect_list=fancy_effect_list,
+                        bbox_info=bbox_info)
 
     def get_bitrate(self, file):
         probe = ffmpeg.probe(file)
@@ -45,7 +51,7 @@ class VideoGeneration:
         bitrate = int(video_bitrate['bit_rate'])
         return bitrate
 
-    def add_effect_point(self, video, effec_point_list):
+    def add_effect_point(self, video):
         """This method add effects to a given video.
 
         Args:
@@ -56,11 +62,11 @@ class VideoGeneration:
         #   video: the video with effects
         """
 
-        for point in effec_point_list:
+        for point in self.effect_point_list:
             video.scale_x.AddPoint(point['frame'], point['scale_x'], self.line_type)
             video.scale_y.AddPoint(point['frame'], point['scale_y'], self.line_type)
-            video.location_x.AddPoint(point['frame'], point['location_x'], self.line_type)
-            video.location_y.AddPoint(point['frame'], point['location_y'], self.line_type)
+            # video.location_x.AddPoint(point['frame'], point['location_x'], self.line_type)
+            # video.location_y.AddPoint(point['frame'], point['location_y'], self.line_type)
 
     def make_effect_point_list_from_desc(self, effect_desc_list, default_scale=1.2, scale_delta=0.1, frame_delta=5):
         effect_point_list = []
@@ -106,6 +112,7 @@ class VideoGeneration:
                                           'location_y': default_loc_y})
                 effect_point_list.extend(effect_points)
 
+        self.effect_point_list = effect_point_list
         return effect_point_list
 
     def edit_video(self,
@@ -114,7 +121,8 @@ class VideoGeneration:
                    effect_point_list=None,
                    save_from=None,
                    save_to=None,
-                   fancy_effect_list=None):
+                   fancy_effect_list=None,
+                   bbox_info=None):
         # Create an FFmpegReader
         r = openshot.FFmpegReader(video_in_path)
 
@@ -145,8 +153,22 @@ class VideoGeneration:
         clip = openshot.Clip(r)
         clip.Open()
 
-        if effect_point_list is not None:
-            self.add_effect_point(clip, effect_point_list)
+        from_idx = 0
+        to_idx = r.info.video_length
+        if save_from is not None and save_to is not None and save_from < save_to:
+            if 0 < save_from < to_idx:
+                from_idx = save_from
+            if 0 < save_to < to_idx:
+                to_idx = save_to
+        self.from_idx = from_idx
+        self.to_idx = to_idx
+
+        # if bbox_info is not None:
+        #     self.adjust_scale(bbox_info)
+        self.add_effect_point(clip)
+        if bbox_info is not None:
+            self.adjust_center(clip, bbox_info, strategy=1, move_type='x', max_move_limitation=True)
+            self.adjust_loc_y(clip, bbox_info, strategy=1)
 
         if fancy_effect_list is not None:
             from effect import get_fancy_effects
@@ -157,14 +179,6 @@ class VideoGeneration:
 
         # Open the Writer
         w.Open()
-
-        from_idx = 0
-        to_idx = r.info.video_length
-        if save_from is not None and save_to is not None and save_from < save_to:
-            if 0 < save_from < to_idx:
-                from_idx = save_from
-            if 0 < save_to < to_idx:
-                to_idx = save_to
 
         if self.debug is True:
             self.get_property_change_curves(clip, from_idx, to_idx)
@@ -194,3 +208,157 @@ class VideoGeneration:
             self.property_change_curves['loc_x'].append(video.location_x.GetValue(idx))
             self.property_change_curves['loc_y'].append(video.location_y.GetValue(idx))
             self.property_change_curves['alpha'].append(video.alpha.GetValue(idx))
+
+    def adjust_center(self, video, bbox_info, strategy=1, move_type='xy', max_move_limitation=True):
+        # calculate the distance of bbox to view center
+        # right to center: negative
+        # left to center: positive
+        bboxes = bbox_info['bboxes']
+        frame_num = bboxes.shape[0]
+        h, w = bbox_info['frame_size']
+        bbox_center_x = (bboxes[:, 0] + bboxes[:, 2]) / 2
+        bbox_center_y = (bboxes[:, 1] + bboxes[:, 3]) / 2
+
+        def preprocess_data(data, kernel_size = 10):
+            import numpy as np
+            #average smooth
+            kernel = np.ones(kernel_size) / kernel_size
+            temp = np.convolve(data, kernel, mode='same')
+            affected_idx = int(kernel_size/2)
+            data[affected_idx:-affected_idx] = temp[affected_idx:-affected_idx]
+            return data
+
+        bbox_center_x = preprocess_data(bbox_center_x)
+        bbox_center_y = preprocess_data(bbox_center_y)
+
+        view_center_x = w / 2
+        view_center_y = h / 2
+        dis_x = (view_center_x - bbox_center_x) / w
+        dis_y = (view_center_y - bbox_center_y) / h
+
+        frame_idx_list = []
+        if strategy == 0:
+            # adjust locations every 10 frames
+            frame_idx_list.extend(list(range(self.from_idx, self.to_idx, 10)))
+            frame_idx_list.append(self.to_idx-1)
+        elif strategy == 1:
+            # on special frames (start_from, keyframe, and end_to)
+            for point in self.effect_point_list:
+                frame_idx_list.append(point['frame'])
+        elif strategy == 2:
+            # every 10 frames + special frames
+            frame_idx_list.extend(list(range(self.from_idx, self.to_idx, 10)))
+            for point in self.effect_point_list:
+                frame_idx_list.append(point['frame'])
+            frame_idx_list.append(self.to_idx-1)
+
+        for frame_idx in frame_idx_list:
+            scale = video.scale_x.GetValue(frame_idx)
+            loc_x_abs = abs(dis_x[frame_idx])*scale
+            loc_y_abs = abs(dis_y[frame_idx]*scale)
+
+            if max_move_limitation is True:
+                max_move = (scale - 1)/2
+                loc_x_abs = min(max_move, abs(dis_x[frame_idx])*scale)
+                loc_y_abs = min(max_move, abs(dis_y[frame_idx]*scale))
+
+            loc_x = -loc_x_abs if dis_x[frame_idx] < 0 else loc_x_abs
+            loc_y = -loc_y_abs if dis_x[frame_idx] < 0 else loc_y_abs
+            if move_type == 'x':
+                video.location_x.AddPoint(frame_idx, loc_x, self.line_type)
+            elif move_type == 'y':
+                video.location_y.AddPoint(frame_idx, loc_y, self.line_type)
+            elif move_type == 'xy':
+                video.location_x.AddPoint(frame_idx, loc_x, self.line_type)
+                video.location_y.AddPoint(frame_idx, loc_y, self.line_type)
+
+    def adjust_loc_y(self, video, bbox_info, strategy=1):
+        # calculate the distance of bbox to view center
+        # right to center: negative
+        # left to center: positive
+        bboxes = bbox_info['bboxes']
+        frame_num = bboxes.shape[0]
+        h, w = bbox_info['frame_size']
+        half_view_height = h / 2
+        bbox_upper_pixel_loc = bboxes[:, 1]
+
+        def preprocess_data(data, kernel_size = 10):
+            import numpy as np
+            #average smooth
+            kernel = np.ones(kernel_size) / kernel_size
+            temp = np.convolve(data, kernel, mode='same')
+            affected_idx = int(kernel_size/2)
+            data[affected_idx:-affected_idx] = temp[affected_idx:-affected_idx]
+            return data
+
+        bbox_upper_pixel_loc = preprocess_data(bbox_upper_pixel_loc)
+
+        frame_idx_list = []
+        if strategy == 0:
+            # adjust locations every 10 frames
+            frame_idx_list.extend(list(range(self.from_idx, self.to_idx, 10)))
+            frame_idx_list.append(self.to_idx-1)
+        elif strategy == 1:
+            # on special frames (start_from, keyframe, and end_to)
+            for point in self.effect_point_list:
+                frame_idx_list.append(point['frame'])
+        elif strategy == 2:
+            # every 10 frames + special frames
+            frame_idx_list.extend(list(range(self.from_idx, self.to_idx, 10)))
+            for point in self.effect_point_list:
+                frame_idx_list.append(point['frame'])
+            frame_idx_list.append(self.to_idx-1)
+
+        for frame_idx in frame_idx_list:
+            loc_y = 0.0
+            if bbox_upper_pixel_loc[frame_idx] < half_view_height:  # there is some bbox in the upper half view
+                scale = video.scale_x.GetValue(frame_idx)
+                bbox_upper_height = half_view_height - bbox_upper_pixel_loc[frame_idx]
+                bbox_upper_height_scaled = bbox_upper_height * scale
+                if bbox_upper_height_scaled > half_view_height:  # scaled bbox is out of view
+                    loc_y = (bbox_upper_height_scaled - half_view_height) / h
+                    print('debug, frame={}, bbox_upper_height={}, scale={}, loc_y={}'.format(frame_idx, bbox_upper_height, scale, loc_y))
+            video.location_y.AddPoint(frame_idx, loc_y, self.line_type)
+
+    def adjust_scale(self, bbox_info, strategy=0):
+        bboxes = bbox_info['bboxes']
+        h, w = bbox_info['frame_size']
+        width = bboxes[:, 2] - bboxes[:, 0]
+        height = bboxes[:, 3] - bboxes[:, 1]
+
+        def preprocess_data(data, kernel_size = 10):
+            import numpy as np
+            #average smooth
+            kernel = np.ones(kernel_size) / kernel_size
+            temp = np.convolve(data, kernel, mode='same')
+            affected_idx = int(kernel_size/2)
+            data[affected_idx:-affected_idx] = temp[affected_idx:-affected_idx]
+            return data
+
+        width = preprocess_data(width)
+        height = preprocess_data(height)
+
+        if strategy == 0:
+            max_scales_w = w / width
+            max_scales_h = h / height
+
+            for point in self.effect_point_list:
+                frame_idx = point['frame']
+                max_scale = min(max_scales_w[frame_idx], max_scales_h[frame_idx])
+                if point['scale_x'] > max_scale:
+                    print('adjust_scale: frame={}, scale_before={}, scale_after={}'.format(frame_idx,point['scale_x'], max_scale))
+                    point['scale_x'] = max_scale
+                    point['scale_y'] = max_scale
+
+        # if strategy == 1:
+        #     # make sure bbox not out when loc_x & loc_y keeps 0.0
+        #     left = preprocess_data(bboxes[:, 0])
+        #     right = preprocess_data(bboxes[:, 2])
+        #     up = preprocess_data(bboxes[:, 1])
+        #     down = preprocess_data(bboxes[:, 3])
+        #     half_x = w/2
+        #     half_h = h/2
+        #     max_scale_left = half_x / (half_x - left)
+        #     max_scale_right = half_x / (right - half_x)
+        #     max_scale_up = half_h / (half_h - up)
+        #     max_scale_down = half_h / (down - half_h)

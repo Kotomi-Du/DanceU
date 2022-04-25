@@ -220,6 +220,77 @@ def draw_video_property_curve(property_dict, prop_type='scale', title='name'):
     figure.savefig("vis_result/{}_{}.png".format(title, prop_type))
 
 
+def draw_bbox_width_height(bboxes, title):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    if framenum_uplimit != -1:
+        bboxes = bboxes[:framenum_uplimit, :]
+
+    frame_num = bboxes.shape[0]
+    w_list = bboxes[:, 2] - bboxes[:, 0]
+    h_list = bboxes[:, 3] - bboxes[:, 1]
+
+    frame_idx_list = range(frame_num)
+
+    # create figure and axis objects with subplots()
+    figure, (ax1, ax2) = plt.subplots(2)
+
+    # width
+    ax1.plot(frame_idx_list, w_list, color="green", label="bbox width", linestyle='-')
+    ax1.xaxis.set_ticks(np.arange(np.min(w_list), np.max(w_list), 50))
+    # height
+    ax2.plot(frame_idx_list, h_list, color="green", label="bbox height", linestyle='-')
+    ax2.xaxis.set_ticks(np.arange(np.min(h_list), np.max(h_list), 50))
+
+    figure.savefig("vis_result/{}_width_height.png".format(title))
+
+    print('fig saved')
+
+
+def draw_bbox_center(bboxes, title):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    if framenum_uplimit != -1:
+        bboxes = bboxes[:framenum_uplimit, :]
+
+    frame_num = bboxes.shape[0]
+    bbox_center_x = (bboxes[:, 0] + bboxes[:, 2]) / 2
+    bbox_center_y = (bboxes[:, 1] + bboxes[:, 3]) / 2
+
+    def preprocess_data(data, kernel_size = 10):
+        #average smooth
+        kernel = np.ones(kernel_size) / kernel_size
+        temp = np.convolve(data, kernel, mode='same')
+        affected_idx = int(kernel_size/2)
+        data[affected_idx:-affected_idx] = temp[affected_idx:-affected_idx]
+        return data
+
+    bbox_center_x_before_smooth = np.copy(bbox_center_x)
+    bbox_center_y_before_smooth = np.copy(bbox_center_y)
+    bbox_center_x_after_smooth = preprocess_data(bbox_center_x)
+    bbox_center_y_after_smooth = preprocess_data(bbox_center_y)
+
+    frame_idx_list = range(frame_num)
+
+    # create figure and axis objects with subplots()
+    figure, (ax1, ax2) = plt.subplots(2, 1, figsize=(len(bbox_center_x)/35, 5))
+
+    # center x
+    ax1.plot(frame_idx_list, bbox_center_x_before_smooth, color="lightcoral", label="bbox center x", linestyle='-')
+    ax1.plot(frame_idx_list, bbox_center_x_after_smooth, color="green", label="bbox center x after smooth", linestyle='-')
+    ax1.xaxis.set_ticks(np.arange(np.min(bbox_center_x), np.max(bbox_center_x), 50))
+    ax1.legend(loc='upper right')
+    # center y
+    ax2.plot(frame_idx_list, bbox_center_y_before_smooth, color="lightcoral", label="bbox center y", linestyle='-')
+    ax2.plot(frame_idx_list, bbox_center_y_after_smooth, color="green", label="bbox center y after smooth", linestyle='-')
+    ax2.xaxis.set_ticks(np.arange(np.min(bbox_center_y), np.max(bbox_center_y), 50))
+    ax2.legend(loc='upper right')
+
+    figure.savefig("vis_result/{}_center.png".format(title))
+
+    print('fig saved')
+
+
 def print_performance():
     #Audio
     #Motion
