@@ -35,12 +35,9 @@ def main(video_path, output_dir, debug):
                     )
 
     if debug is True:
-<<<<<<< HEAD
         draw_audio_feature(ado.onset_length, ado.get_audio_rmse(), ado.tempo, beats,  video_name)
-=======
         # draw_bbox_width_height(bboxes, video_name)
         draw_audio_feature(ado.onset_length, ado.tempo, beats, group_list, video_name)
->>>>>>> Try best to make dancer in the center of the view by adjusting X and Y locations.
         draw_video_property_curve(enc.property_change_curves, prop_type='scale', title=video_name)
         draw_video_property_curve(enc.property_change_curves, prop_type='loc_x', title=video_name)
         draw_video_property_curve(enc.property_change_curves, prop_type='loc_y', title=video_name)

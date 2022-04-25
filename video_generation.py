@@ -219,18 +219,6 @@ class VideoGeneration:
         bbox_center_x = (bboxes[:, 0] + bboxes[:, 2]) / 2
         bbox_center_y = (bboxes[:, 1] + bboxes[:, 3]) / 2
 
-        def preprocess_data(data, kernel_size = 10):
-            import numpy as np
-            #average smooth
-            kernel = np.ones(kernel_size) / kernel_size
-            temp = np.convolve(data, kernel, mode='same')
-            affected_idx = int(kernel_size/2)
-            data[affected_idx:-affected_idx] = temp[affected_idx:-affected_idx]
-            return data
-
-        bbox_center_x = preprocess_data(bbox_center_x)
-        bbox_center_y = preprocess_data(bbox_center_y)
-
         view_center_x = w / 2
         view_center_y = h / 2
         dis_x = (view_center_x - bbox_center_x) / w
@@ -282,17 +270,6 @@ class VideoGeneration:
         half_view_height = h / 2
         bbox_upper_pixel_loc = bboxes[:, 1]
 
-        def preprocess_data(data, kernel_size = 10):
-            import numpy as np
-            #average smooth
-            kernel = np.ones(kernel_size) / kernel_size
-            temp = np.convolve(data, kernel, mode='same')
-            affected_idx = int(kernel_size/2)
-            data[affected_idx:-affected_idx] = temp[affected_idx:-affected_idx]
-            return data
-
-        bbox_upper_pixel_loc = preprocess_data(bbox_upper_pixel_loc)
-
         frame_idx_list = []
         if strategy == 0:
             # adjust locations every 10 frames
@@ -326,18 +303,6 @@ class VideoGeneration:
         width = bboxes[:, 2] - bboxes[:, 0]
         height = bboxes[:, 3] - bboxes[:, 1]
 
-        def preprocess_data(data, kernel_size = 10):
-            import numpy as np
-            #average smooth
-            kernel = np.ones(kernel_size) / kernel_size
-            temp = np.convolve(data, kernel, mode='same')
-            affected_idx = int(kernel_size/2)
-            data[affected_idx:-affected_idx] = temp[affected_idx:-affected_idx]
-            return data
-
-        width = preprocess_data(width)
-        height = preprocess_data(height)
-
         if strategy == 0:
             max_scales_w = w / width
             max_scales_h = h / height
@@ -352,10 +317,10 @@ class VideoGeneration:
 
         # if strategy == 1:
         #     # make sure bbox not out when loc_x & loc_y keeps 0.0
-        #     left = preprocess_data(bboxes[:, 0])
-        #     right = preprocess_data(bboxes[:, 2])
-        #     up = preprocess_data(bboxes[:, 1])
-        #     down = preprocess_data(bboxes[:, 3])
+        #     left = bboxes[:, 0
+        #     right = bboxes[:, 2]
+        #     up = bboxes[:, 1]
+        #     down = bboxes[:, 3]
         #     half_x = w/2
         #     half_h = h/2
         #     max_scale_left = half_x / (half_x - left)

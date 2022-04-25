@@ -7,6 +7,8 @@ class Motion:
         t_area_data = self.calc_area(bounding_boxes)
         self.area_data = self.preprocess_data(t_area_data)
         self.bboxes = np.array(bounding_boxes)
+        for i in range(self.bboxes.shape[1]):
+            self.bboxes[:, i] = self.preprocess_data(self.bboxes[:, i])
 
     def preprocess_data(self, data, kernel_size = 10):
         ##rectify some data 361-366
