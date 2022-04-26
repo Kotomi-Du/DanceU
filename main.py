@@ -17,6 +17,7 @@ def main(video_path, output_dir, debug):
     area_data = m.area_data
     bboxes = m.bboxes
     infer_frame_size = m.infer_frame_size
+    bbox_info = {'bboxes': bboxes, 'frame_size': infer_frame_size}
 
     # analyze audio
     ado = Audio(video_path)
@@ -24,15 +25,17 @@ def main(video_path, output_dir, debug):
     beats = ado.beats
 
     # get effects based on music and motion
-    eff = EffectDecision(debug=debug)
+    cfg = {'adjust_loc_x': True,   # try to adjust vertical center of bbox to the view center
+           'adjust_loc_y': True,   # adjust the upper boundary of bbox within view
+           'adjust_scale': False}  # adjust the previously decided scale so that the scaled bbox is within view
+    eff = EffectDecision(bbox_info=bbox_info, cfg=cfg, debug=debug)
     res, start_list, key_list, end_list, zoom_scale_list, group_list = eff.get_effect_list(area_data, beats, ado, framerate, group_size=2)
+    effects = eff.make_effect_point_list_from_desc_list()
 
     # generate edited video
     out_path = os.path.join(output_dir, '{}_out.mp4'.format(video_name))
-    enc = VideoGeneration(line_type='linear', debug=debug)
-    enc.gen_effects(res, video_in_path=video_path, video_out_path=out_path,
-                    bbox_info={'bboxes': bboxes, 'frame_size': infer_frame_size},
-                    )
+    enc = VideoGeneration(effects, line_type='linear', debug=debug)
+    enc.gen_effects(video_in_path=video_path, video_out_path=out_path)
 
     if debug is True:
         draw_audio_feature(ado.onset_length, ado.get_audio_rmse(), ado.tempo, beats,  video_name)
