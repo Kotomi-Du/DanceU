@@ -23,7 +23,18 @@ class EffectDecision:
     def get_default_loc(self):
         # TODO: to be determined by bbox_info
         default_loc_x = 0.0
-        default_loc_y = 0.0  # -(default_scale - 1.0) / 2
+        bboxes = self.bbox_info['bboxes']
+        h, w = self.bbox_info['frame_size']
+        bbox_center_y = (bboxes[:, 1] + bboxes[:, 3]) / 2
+        avg_center_y = np.average(bbox_center_y)
+        view_center_y = h / 2
+        dis_y = (view_center_y - avg_center_y) / h
+        loc_y_abs = abs(dis_y) * self.default_scale
+        max_loc_y_abs = (self.default_scale - 1) / 2
+        loc_y_abs = min(loc_y_abs, max_loc_y_abs)
+        default_loc_y = -loc_y_abs if dis_y < 0 else loc_y_abs
+        if self.debug is True:
+            print('default_loc_y = {}'.format(default_loc_y))
         return default_loc_x, default_loc_y
 
     def find_steepest(self, data_block, start_frame_idx):
