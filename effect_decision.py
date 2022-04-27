@@ -10,8 +10,7 @@ class EffectDecision:
         self.default_scale = self.get_default_scale()
         self.default_loc_x, self.default_loc_y = self.get_default_loc()
         self.cfg = {'adjust_loc_x': True,   # try to adjust vertical center of bbox to the view center
-                    'adjust_loc_y': True,   # adjust the upper boundary of bbox within view
-                    'adjust_scale': False}  # adjust the previously decided scale so that the scaled bbox is within view
+                    'adjust_loc_y': True}   # adjust the upper boundary of bbox within view
 
     def get_default_scale(self):
         default_scale = 1.2  # TODO: to be determined by bbox_info
@@ -230,7 +229,6 @@ class EffectDecision:
     def get_effect_points(self, frame_scale_list):
         # According to self.cfg, get the full property description of a specific frame_idx
         # including frame_idx, scale_x, scale_y, location_x, location_y
-        # If adjust_scale, adjust the previously decided scale
         # If adjust_loc_x/y, calculate loc_x/y based on scale and bbox_info.
         # Otherwise, the loc_x/y will be set to the default value
         effect_points = []
@@ -240,9 +238,6 @@ class EffectDecision:
                 continue
 
             scale = frame_scale['scale']
-            if 'adjust_scale' in self.cfg:
-                if self.cfg['adjust_scale'] is True:
-                    scale = self.adjust_scale(frame_idx, scale)
 
             loc_x = self.default_loc_x
             if 'adjust_loc_x' in self.cfg:
@@ -260,33 +255,6 @@ class EffectDecision:
                                   'location_x': loc_x,
                                   'location_y': loc_y})
         return effect_points
-
-    def adjust_scale(self, frame_idx, scale, strategy=0):
-        # adjust the previously decided scale so that the scaled bbox is within view
-        bbox = self.bbox_info['bboxes'][frame_idx]
-        h, w = self.bbox_info['frame_size']
-        width = bbox[2] - bbox[0]
-        height = bbox[3] - bbox[1]
-        scale_new = scale
-        if strategy == 0:
-            max_scales_w = w / width
-            max_scales_h = h / height
-            max_scale = min(max_scales_w, max_scales_h)
-            if scale > max_scale:
-                scale_new = max_scale
-        # if strategy == 1:
-        #     # make sure bbox not out when loc_x & loc_y keeps 0.0
-        #     left = bbox[0]
-        #     right = bbox[2]
-        #     up = bbox[1]
-        #     down = bbox[3]
-        #     half_x = w/2
-        #     half_h = h/2
-        #     max_scale_left = half_x / (half_x - left)
-        #     max_scale_right = half_x / (right - half_x)
-        #     max_scale_up = half_h / (half_h - up)
-        #     max_scale_down = half_h / (down - half_h)
-        return scale_new
 
     def adjust_loc_x(self, frame_idx, scale, max_move_limitation=True):
         # try to adjust vertical center of bbox to the view center
