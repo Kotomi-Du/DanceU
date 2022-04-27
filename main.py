@@ -25,10 +25,7 @@ def main(video_path, output_dir, debug):
     beats = ado.beats
 
     # get effects based on music and motion
-    cfg = {'adjust_loc_x': True,   # try to adjust vertical center of bbox to the view center
-           'adjust_loc_y': True,   # adjust the upper boundary of bbox within view
-           'adjust_scale': False}  # adjust the previously decided scale so that the scaled bbox is within view
-    eff = EffectDecision(bbox_info=bbox_info, cfg=cfg, debug=debug)
+    eff = EffectDecision(bbox_info=bbox_info, debug=debug)
     res, start_list, key_list, end_list, zoom_scale_list, group_list = eff.get_effect_list(area_data, beats, ado, framerate, group_size=2)
     effects = eff.make_effect_point_list_from_desc_list()
 

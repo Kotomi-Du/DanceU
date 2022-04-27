@@ -2,19 +2,16 @@ import numpy as np
 from scipy import signal
 
 class EffectDecision:
-    def __init__(self, bbox_info, cfg=None, debug=False):
+    def __init__(self, bbox_info, debug=False):
         self.bbox_info = bbox_info
         self.debug = debug
         self.effect_desc_list = None
         self.effect_point_list = None
         self.default_scale = self.get_default_scale()
         self.default_loc_x, self.default_loc_y = self.get_default_loc()
-        if cfg is None:
-            self.cfg = {'adjust_loc_x': True,   # try to adjust vertical center of bbox to the view center
-                        'adjust_loc_y': True,   # adjust the upper boundary of bbox within view
-                        'adjust_scale': False}  # adjust the previously decided scale so that the scaled bbox is within view
-        else:
-            self.cfg = cfg
+        self.cfg = {'adjust_loc_x': True,   # try to adjust vertical center of bbox to the view center
+                    'adjust_loc_y': True,   # adjust the upper boundary of bbox within view
+                    'adjust_scale': False}  # adjust the previously decided scale so that the scaled bbox is within view
 
     def get_default_scale(self):
         default_scale = 1.2  # TODO: to be determined by bbox_info
