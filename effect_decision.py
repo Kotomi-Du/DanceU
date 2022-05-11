@@ -7,31 +7,32 @@ class EffectDecision:
         self.debug = debug
         self.effect_desc_list = None
         self.effect_point_list = None
-        self.default_scale = self.get_default_scale()
-        self.default_loc_x, self.default_loc_y = self.get_default_loc()
-        self.cfg = {'adjust_loc_x': True,   # try to adjust vertical center of bbox to the view center
-                    'adjust_loc_y': True}   # adjust the upper boundary of bbox within view
+        self.perfect_bbox_h_to_view_h_ratio = 0.75
+        self.default_scale, self.default_loc_x, self.default_loc_y = self.cal_default_properties()
+        self.cfg = {'adjust_loc_x': True,    # try to adjust vertical center of bbox to the view center
+                    'adjust_loc_y': True,    # try to adjust bbox to best view location
+                    'default_scale': True,  # same scale factor for all start_from & end_to frames
+                    }
 
-    def get_default_scale(self):
-        default_scale = 1.2  # TODO: to be determined by bbox_info
-        return default_scale
+    def cal_default_properties(self, num=0):
+        if num > 0:
+            bboxes = self.bbox_info['bboxes'][:num, :]
+        else:
+            bboxes = self.bbox_info['bboxes']
+        avg_bbox = np.average(bboxes, axis=0)
+        default_scale = self.cal_best_scale(avg_bbox)
+        default_loc_x = self.adjust_loc_x(avg_bbox, default_scale)
+        default_loc_y = self.adjust_loc_y(avg_bbox, default_scale)
+        return default_scale, default_loc_x, default_loc_y
 
-    def get_default_loc(self):
-        # TODO: to be determined by bbox_info
-        default_loc_x = 0.0
-        bboxes = self.bbox_info['bboxes']
+    def cal_best_scale(self, bbox):
         h, w = self.bbox_info['frame_size']
-        bbox_center_y = (bboxes[:, 1] + bboxes[:, 3]) / 2
-        avg_center_y = np.average(bbox_center_y)
-        view_center_y = h / 2
-        dis_y = (view_center_y - avg_center_y) / h
-        loc_y_abs = abs(dis_y) * self.default_scale
-        max_loc_y_abs = (self.default_scale - 1) / 2
-        loc_y_abs = min(loc_y_abs, max_loc_y_abs)
-        default_loc_y = -loc_y_abs if dis_y < 0 else loc_y_abs
-        if self.debug is True:
-            print('default_loc_y = {}'.format(default_loc_y))
-        return default_loc_x, default_loc_y
+        bbox_h = bbox[3] - bbox[1]
+        perfect_bbox_h = self.perfect_bbox_h_to_view_h_ratio * h
+        best_scale = 1.0
+        if bbox_h < perfect_bbox_h:
+            best_scale = perfect_bbox_h / bbox_h
+        return best_scale
 
     def find_steepest(self, data_block, start_frame_idx):
         n = len(data_block)
@@ -180,20 +181,18 @@ class EffectDecision:
         return effect_list, start_list, key_list, end_list, zoom_scale_list, group_list
 
     def make_effect_point_list_from_desc_list(self):
-        default_scale = self.default_scale
-        default_loc_x = self.default_loc_x
-        default_loc_y = self.default_loc_y
-
-        effect_point_list = []
         # Set properties for first two frames
-        effect_point_list.extend([
-            {'frame': 0, 'scale_x': 1.0, 'scale_y': 1.0, 'location_x': 0.0, 'location_y': 0.0},
-            {'frame': 1, 'scale_x': default_scale, 'scale_y': default_scale, 'location_x': default_loc_x,
-             'location_y': default_loc_y},
-        ])
+        effect_point_list = [{'frame': 0, 'scale_x': 1.0, 'scale_y': 1.0, 'location_x': 0.0, 'location_y': 0.0}]
+        init_frame = 1
+        if self.cfg['default_scale'] is True:
+            init_scale = self.default_scale
+        else:
+            init_scale = self.cal_best_scale(self.bbox_info['bboxes'][init_frame])
+        effect_point_list.extend(self.get_effect_points([{'frame': init_frame, 'scale': init_scale}]))
 
         # Set properties for start_from, keyframe, and end_to that are described in self.effect_desc_list
-        last_key_scale = default_scale
+        # last_key_scale = default_scale
+        last_key_scale = init_scale
         for effect_desc in self.effect_desc_list:
             # effect_desc={
             # 'frame': key_frame_idx,
@@ -206,12 +205,16 @@ class EffectDecision:
             key_scale = last_key_scale
             for effect in effect_desc['effect']:
                 if effect['type'] == 'zoom':
-                    key_scale = effect['scale'] if effect['scale'] > 1 else default_scale
+                    key_scale = max(effect['scale'], 1.0)
                     last_key_scale = key_scale
             start_from = effect_desc['start_from']
-            start_scale = default_scale
             end_to = effect_desc['end_to']
-            end_scale = default_scale
+            if self.cfg['default_scale'] is True:
+                start_scale = self.default_scale
+                end_scale = self.default_scale
+            else:
+                start_scale = self.cal_best_scale(self.bbox_info['bboxes'][start_from])
+                end_scale = self.cal_best_scale(self.bbox_info['bboxes'][end_to])
 
             # 2. According to self.cfg and scale, get the properties of a specific frame_idx,
             #    including frame_idx, scale_x, scale_y, location_x, location_y
@@ -242,12 +245,12 @@ class EffectDecision:
             loc_x = self.default_loc_x
             if 'adjust_loc_x' in self.cfg:
                 if self.cfg['adjust_loc_x']:
-                    loc_x = self.adjust_loc_x(frame_idx, scale)
+                    loc_x = self.adjust_loc_x(self.bbox_info['bboxes'][frame_idx], scale)
 
             loc_y = self.default_loc_y
             if 'adjust_loc_y' in self.cfg:
                 if self.cfg['adjust_loc_y']:
-                    loc_y = self.adjust_loc_y(frame_idx, scale)
+                    loc_y = self.adjust_loc_y(self.bbox_info['bboxes'][frame_idx], scale)
 
             effect_points.append({'frame': frame_idx,
                                   'scale_x': scale,
@@ -256,43 +259,47 @@ class EffectDecision:
                                   'location_y': loc_y})
         return effect_points
 
-    def adjust_loc_x(self, frame_idx, scale, max_move_limitation=True):
+    def adjust_loc_x(self, bbox, scale, max_move_limitation=True):
         # try to adjust vertical center of bbox to the view center
         # calculate the distance of bbox to view center
         # right to center: negative
         # left to center: positive
-        bbox = self.bbox_info['bboxes'][frame_idx]
         h, w = self.bbox_info['frame_size']
         bbox_center_x = (bbox[0] + bbox[2]) / 2
         view_center_x = w / 2
         dis_x = (view_center_x - bbox_center_x) / w
         loc_x_abs = abs(dis_x)*scale
-        # bbox_center_y = (bbox[1] + bbox[3]) / 2
-        # view_center_y = h / 2
-        # dis_y = (view_center_y - bbox_center_y) / h
-        # loc_y_abs = abs(dis_y)*scale
-
         if max_move_limitation is True:
             max_move = (scale - 1)/2
             loc_x_abs = min(max_move, loc_x_abs)
-            # loc_y_abs = min(max_move, loc_y_abs)
-
         loc_x = -loc_x_abs if dis_x < 0 else loc_x_abs
-        # loc_y = -loc_y_abs if dis_x < 0 else loc_y_abs
         return loc_x
 
-    def adjust_loc_y(self, frame_idx, scale):
-        # adjust the upper boundary of bbox within view
-        bbox = self.bbox_info['bboxes'][frame_idx]
+    def adjust_loc_y(self, bbox, scale):
         h, w = self.bbox_info['frame_size']
-        half_view_height = h / 2
-        bbox_upper_pixel_loc = bbox[1]
+        # 1) Adjust the upper boundary of bbox after scaling
+        #    so that there is at least has room to the view upper boundary
+        # 2) Adjust the scaled bbox to locate at a slightly lower part of the view
+        upper_blank_ratio = 3/4
+        upper_room_ratio = 1/16  # 1/8
 
-        loc_y = self.default_loc_y
-        if bbox_upper_pixel_loc < half_view_height:  # there is some bbox in the upper half view
-            bbox_upper_height = half_view_height - bbox_upper_pixel_loc
-            bbox_upper_height_scaled = bbox_upper_height * scale
-            if bbox_upper_height_scaled > half_view_height:  # scaled bbox is out of view
-                loc_y = (bbox_upper_height_scaled - half_view_height) / h
+        # pixel_bbox_up_scaled is the pixel value of the bbox upper boundary after scaling
+        # the pixel value of the upper boundary of the view is 0
+        # pixel_bbox_up_scaled < 0: the upper of boundary of bbox after scaling is out of view
+        pixel_bbox_up_scaled = bbox[1]*scale + (1-scale)*h/2
+        bbox_h_scaled = (bbox[3] - bbox[1]) * scale
+        pixel_gap_up_best = None
+        if bbox_h_scaled < self.perfect_bbox_h_to_view_h_ratio * h:
+            h_blank = h - bbox_h_scaled
+            pixel_gap_up_best = upper_blank_ratio * h_blank
+        else:
+            pixel_gap_up_best = upper_room_ratio * h
+        pixel_move = pixel_gap_up_best - pixel_bbox_up_scaled
+        loc_y = pixel_move / h
+
+        max_move = (scale - 1) / 2
+        loc_y_abs = abs(loc_y)
+        loc_y_abs = min(max_move, loc_y_abs)
+        loc_y = -loc_y_abs if loc_y < 0 else loc_y_abs
+
         return loc_y
-
