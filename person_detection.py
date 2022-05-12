@@ -103,6 +103,7 @@ def Infer(input_path, debug=False):
             os.makedirs(infer_debug_folder, exist_ok=True)
 
     bboxes = [[0,0,0,0]]
+    infer_frame_size = None
     args = build_argparser().parse_args()
     log.info('Initializing Inference Engine...')
     ie = IECore()
@@ -134,6 +135,7 @@ def Infer(input_path, debug=False):
             start_time = frame_meta['start_time']
 
             size = frame.shape[:2]
+            infer_frame_size = size
             bbox = None
             for detection in detections:
                 if detection.score > args.prob_threshold:
@@ -229,7 +231,7 @@ def Infer(input_path, debug=False):
             # Quit.
             if key in {ord('q'), ord('Q'), ESC_KEY}:
                 break
-    return bboxes[1:]
+    return bboxes[1:], infer_frame_size
 
 
 if __name__ == '__main__':

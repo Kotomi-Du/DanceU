@@ -220,6 +220,33 @@ def draw_video_property_curve(property_dict, prop_type='scale', title='name'):
     figure.savefig("vis_result/{}_{}.png".format(title, prop_type))
 
 
+def draw_bbox_width_height(bboxes, title):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    if framenum_uplimit != -1:
+        bboxes = bboxes[:framenum_uplimit, :]
+
+    frame_num = bboxes.shape[0]
+    w_list = bboxes[:, 2] - bboxes[:, 0]
+    h_list = bboxes[:, 3] - bboxes[:, 1]
+
+    frame_idx_list = range(frame_num)
+
+    # create figure and axis objects with subplots()
+    figure, (ax1, ax2) = plt.subplots(2)
+
+    # width
+    ax1.plot(frame_idx_list, w_list, color="green", label="bbox width", linestyle='-')
+    ax1.xaxis.set_ticks(np.arange(np.min(w_list), np.max(w_list), 50))
+    # height
+    ax2.plot(frame_idx_list, h_list, color="green", label="bbox height", linestyle='-')
+    ax2.xaxis.set_ticks(np.arange(np.min(h_list), np.max(h_list), 50))
+
+    figure.savefig("vis_result/{}_width_height.png".format(title))
+
+    print('fig saved')
+
+
 def print_performance():
     #Audio
     #Motion
