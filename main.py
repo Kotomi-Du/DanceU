@@ -22,7 +22,7 @@ def main(video_path, output_dir, debug):
     # analyze audio
     ado = Audio(video_path)
     framerate = ado.framerate
-    beats = ado.beats
+    beats = ado.audio_onsets
 
     # get effects based on music and motion
     eff = EffectDecision(bbox_info=bbox_info, debug=debug)

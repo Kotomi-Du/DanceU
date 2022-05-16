@@ -11,7 +11,7 @@ class EffectDecision:
         self.default_scale, self.default_loc_x, self.default_loc_y = self.cal_default_properties()
         self.cfg = {'adjust_loc_x': True,    # try to adjust vertical center of bbox to the view center
                     'adjust_loc_y': True,    # try to adjust bbox to best view location
-                    'default_scale': True,  # same scale factor for all start_from & end_to frames
+                    'default_scale': False,  # same scale factor for all start_from & end_to frames
                     }
 
     def cal_default_properties(self, num=0):
